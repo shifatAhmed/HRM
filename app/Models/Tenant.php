@@ -38,6 +38,11 @@ class Tenant extends Model
         return $this->belongsTo(Flat::class);
     }
 
+    public function familyMembers(): HasMany
+    {
+        return $this->hasMany(FamilyMemberDetail::class);
+    }
+
     public function invoices(): HasMany
     {
         return $this->hasMany(RentInvoice::class);

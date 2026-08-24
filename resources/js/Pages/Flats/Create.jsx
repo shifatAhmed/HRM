@@ -9,6 +9,7 @@ export default function Create({ buildings }) {
     const { data, setData, post, processing, errors } = useForm({
         building_id: buildings[0]?.id || '',
         flat_no: '',
+        type: '1',
         floor: '',
         size: '',
         rent: 0,
@@ -41,6 +42,21 @@ export default function Create({ buildings }) {
                         <div className="p-6">
                             <form onSubmit={submit} className="space-y-6">
                                 <div>
+                                    <InputLabel htmlFor="type" value="Type" />
+                                    <select
+                                        id="type"
+                                        name="type"
+                                        value={data.type}
+                                        className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        onChange={(e) => setData('type', e.target.value)}
+                                    >
+                                        <option value="1">Flat</option>
+                                        <option value="2">Single Room</option>
+                                    </select>
+                                    <InputError message={errors.type} className="mt-2" />
+                                </div>
+
+                                <div>
                                     <InputLabel htmlFor="building_id" value="Building" />
                                     <select
                                         id="building_id"
@@ -69,6 +85,7 @@ export default function Create({ buildings }) {
                                     />
                                     <InputError message={errors.flat_no} className="mt-2" />
                                 </div>
+
 
                                 <div className="grid gap-6 md:grid-cols-2">
                                     <div>

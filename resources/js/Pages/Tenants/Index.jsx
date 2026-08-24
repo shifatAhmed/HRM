@@ -66,7 +66,13 @@ export default function Index({ tenants }) {
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
                                                     {tenant.status}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                                    <Link
+                                                        href={route('tenants.show', tenant.id)}
+                                                        className="text-green-600 hover:text-green-900"
+                                                    >
+                                                        View
+                                                    </Link>
                                                     <Link
                                                         href={route('tenants.edit', tenant.id)}
                                                         className="text-indigo-600 hover:text-indigo-900"

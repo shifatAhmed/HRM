@@ -9,6 +9,7 @@ export default function Edit({ flat, buildings }) {
     const { data, setData, patch, processing, errors } = useForm({
         building_id: flat.building_id,
         flat_no: flat.flat_no,
+        type: String(flat.type || 1),
         floor: flat.floor || '',
         size: flat.size || '',
         rent: flat.rent,
@@ -68,6 +69,21 @@ export default function Edit({ flat, buildings }) {
                                         onChange={(e) => setData('flat_no', e.target.value)}
                                     />
                                     <InputError message={errors.flat_no} className="mt-2" />
+                                </div>
+
+                                <div>
+                                    <InputLabel htmlFor="type" value="Type" />
+                                    <select
+                                        id="type"
+                                        name="type"
+                                        value={data.type}
+                                        className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        onChange={(e) => setData('type', e.target.value)}
+                                    >
+                                        <option value="1">Flat</option>
+                                        <option value="2">Single Room</option>
+                                    </select>
+                                    <InputError message={errors.type} className="mt-2" />
                                 </div>
 
                                 <div className="grid gap-6 md:grid-cols-2">

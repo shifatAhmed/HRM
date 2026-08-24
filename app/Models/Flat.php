@@ -14,6 +14,7 @@ class Flat extends Model
     protected $fillable = [
         'building_id',
         'flat_no',
+        'type',
         'floor',
         'size',
         'rent',

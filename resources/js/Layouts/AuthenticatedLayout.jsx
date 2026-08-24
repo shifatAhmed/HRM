@@ -46,7 +46,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     href={route('flats.index')}
                                     active={route().current('flats.*')}
                                 >
-                                    Flats
+                                    Flats/Rooms
                                 </NavLink>
                                 <NavLink
                                     href={route('tenants.index')}
@@ -180,7 +180,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             href={route('flats.index')}
                             active={route().current('flats.*')}
                         >
-                            Flats
+                            Flats/Rooms
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={route('tenants.index')}

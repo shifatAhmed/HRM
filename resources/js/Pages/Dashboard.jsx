@@ -63,7 +63,7 @@ export default function Dashboard({ stats }) {
             iconColor: '#2563EB',
         },
         {
-            title: 'Flats',
+            title: 'Flats/Rooms',
             value: stats.flats,
             subtitle: 'All units in portfolio',
             icon: Home,

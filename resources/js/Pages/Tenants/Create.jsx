@@ -1,12 +1,59 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import FlatSearchSelect from '@/Components/FlatSearchSelect';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { useEffect, useState } from 'react';
 
+const createFamilyMember = () => ({
+    id: null,
+    member_name: '',
+    member_photos: [],
+});
+
+const getErrorMessage = (messages) => {
+    if (Array.isArray(messages)) {
+        return messages
+            .flatMap((message) => (Array.isArray(message) ? message : [message]))
+            .filter(Boolean)
+            .join(' ');
+    }
+
+    if (typeof messages === 'string') {
+        return messages;
+    }
+
+    return '';
+};
+
+const collectErrorMessages = (errorBag = {}) => {
+    const messages = [];
+
+    const walk = (value) => {
+        if (Array.isArray(value)) {
+            value.forEach((item) => walk(item));
+            return;
+        }
+
+        if (typeof value === 'object' && value !== null) {
+            Object.values(value).forEach((item) => walk(item));
+            return;
+        }
+
+        if (typeof value === 'string' && value.trim() !== '') {
+            messages.push(value);
+        }
+    };
+
+    walk(errorBag);
+
+    return messages;
+};
+
 export default function Create({ flats }) {
+    const { flash = {} } = usePage().props;
     const { data, setData, post, processing, errors } = useForm({
         flat_id: flats[0]?.id || '',
         name: '',
@@ -14,7 +61,8 @@ export default function Create({ flats }) {
         nid: '',
         nid_photo: [],
         profession: '',
-        family_members: 0,
+        family_members: 1,
+        family_members_details: [createFamilyMember()],
         advance_amount: 0,
         monthly_rent: flats[0]?.rent ?? 0,
         move_in_date: '',
@@ -37,6 +85,31 @@ export default function Create({ flats }) {
         };
     }, [previewUrls]);
 
+    const updateFamilyMembers = (nextMembers) => {
+        setData('family_members_details', nextMembers);
+        setData('family_members', nextMembers.length);
+    };
+
+    const addFamilyMember = () => {
+        updateFamilyMembers([...(data.family_members_details || []), createFamilyMember()]);
+    };
+
+    const removeFamilyMember = (index) => {
+        const nextMembers = (data.family_members_details || []).filter((_, memberIndex) => memberIndex !== index);
+        updateFamilyMembers(nextMembers.length > 0 ? nextMembers : [createFamilyMember()]);
+    };
+
+    const updateFamilyMember = (index, field, value) => {
+        const nextMembers = (data.family_members_details || []).map((member, memberIndex) => (
+            memberIndex === index ? { ...member, [field]: value } : member
+        ));
+        updateFamilyMembers(nextMembers);
+    };
+
+    const handleMemberPhotoChange = (index, files) => {
+        updateFamilyMember(index, 'member_photos', Array.from(files || []));
+    };
+
     const submit = (e) => {
         e.preventDefault();
 
@@ -47,7 +120,7 @@ export default function Create({ flats }) {
         formData.append('phone', data.phone || '');
         formData.append('nid', data.nid || '');
         formData.append('profession', data.profession || '');
-        formData.append('family_members', data.family_members ?? 0);
+        formData.append('family_members', String(data.family_members_details?.length ?? 0));
         formData.append('advance_amount', data.advance_amount ?? 0);
         formData.append('monthly_rent', data.monthly_rent ?? 0);
         formData.append('move_in_date', data.move_in_date || '');
@@ -62,11 +135,35 @@ export default function Create({ flats }) {
             });
         }
 
-        post(route('tenants.store'), {
-            data: formData,
+        (data.family_members_details || []).forEach((member, index) => {
+            if (member.id) {
+                formData.append(`family_members_details[${index}][id]`, String(member.id));
+            }
+
+            formData.append(`family_members_details[${index}][member_name]`, member.member_name || '');
+
+            (member.member_photos || []).forEach((file) => {
+                if (file instanceof File) {
+                    formData.append(`family_members_details[${index}][member_photos][]`, file);
+                }
+            });
+        });
+
+        post(route('tenants.store'), formData, {
             forceFormData: true,
+            preserveScroll: true,
+            preserveState: true,
+            onError: (validationErrors) => {
+                const summary = collectErrorMessages(validationErrors);
+                if (summary.length > 0) {
+                    return summary;
+                }
+                return null;
+            },
         });
     };
+
+    const errorSummary = collectErrorMessages(errors);
 
     return (
         <AuthenticatedLayout
@@ -79,27 +176,33 @@ export default function Create({ flats }) {
             <Head title="Add Tenant" />
 
             <div className="py-12">
-                <div className="mx-auto max-w-3xl sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
+                            {flash.success && (
+                                <div className="mb-6 rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+                                    {flash.success}
+                                </div>
+                            )}
+
+                            {errorSummary.length > 0 && (
+                                <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                                    <ul className="list-disc space-y-1 pl-5">
+                                        {errorSummary.map((message, index) => (
+                                            <li key={`${message}-${index}`}>{message}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
                             <form onSubmit={submit} className="space-y-6">
                                 <div>
-                                    <InputLabel htmlFor="flat_id" value="Assign Flat" />
-                                    <select
-                                        id="flat_id"
-                                        name="flat_id"
+                                    <InputLabel htmlFor="flat_id" value="Assign Flat/Room" />
+                                    <FlatSearchSelect
+                                        flats={flats}
                                         value={data.flat_id}
-                                        className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                        onChange={(e) => {
-                                            setData('flat_id', e.target.value);
-                                        }}
-                                    >
-                                        {flats.map((flat) => (
-                                            <option key={flat.id} value={flat.id}>
-                                                {flat.flat_no} — {flat.building?.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onChange={(value) => setData('flat_id', value)}
+                                    />
                                     <InputError message={errors.flat_id} className="mt-2" />
                                 </div>
 
@@ -174,7 +277,7 @@ export default function Create({ flats }) {
                                             ))}
                                         </div>
                                     )}
-                                    <InputError message={errors.nid_photo} className="mt-2" />
+                                    <InputError message={getErrorMessage(errors.nid_photo)} className="mt-2" />
                                 </div>
 
                                 <div>
@@ -189,20 +292,72 @@ export default function Create({ flats }) {
                                     <InputError message={errors.profession} className="mt-2" />
                                 </div>
 
-                                <div className="grid gap-6 md:grid-cols-2">
-                                    <div>
-                                        <InputLabel htmlFor="family_members" value="Family Members" />
-                                        <TextInput
-                                            id="family_members"
-                                            name="family_members"
-                                            type="number"
-                                            value={data.family_members}
-                                            className="mt-1 block w-full"
-                                            onChange={(e) => setData('family_members', e.target.value)}
-                                        />
-                                        <InputError message={errors.family_members} className="mt-2" />
+                                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                    <div className="mb-4 flex items-center justify-between gap-3">
+                                        <h3 className="text-lg font-medium text-gray-800">Family Members</h3>
+                                        <button
+                                            type="button"
+                                            onClick={addFamilyMember}
+                                            className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+                                        >
+                                            + Add Family Member
+                                        </button>
                                     </div>
 
+                                    <div className="overflow-x-auto">
+                                        <table className="min-w-full border-separate border-spacing-y-2">
+                                            <thead>
+                                                <tr>
+                                                    <th className="px-2 pb-2 text-left text-sm font-medium text-gray-600">Member Name</th>
+                                                    <th className="px-2 pb-2 text-left text-sm font-medium text-gray-600">NID Photos</th>
+                                                    <th className="px-2 pb-2 text-left text-sm font-medium text-gray-600">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {(data.family_members_details || []).map((member, index) => (
+                                                    <tr key={`family-member-${index}`} className="align-top">
+                                                        <td className="rounded-l-md border border-gray-200 bg-white px-2 py-2">
+                                                            <TextInput
+                                                                value={member.member_name}
+                                                                className="block w-full"
+                                                                onChange={(e) => updateFamilyMember(index, 'member_name', e.target.value)}
+                                                                placeholder="Enter member name"
+                                                            />
+                                                        </td>
+                                                        <td className="border border-gray-200 bg-white px-2 py-2">
+                                                            <input
+                                                                type="file"
+                                                                multiple
+                                                                accept="image/*"
+                                                                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                                onChange={(e) => handleMemberPhotoChange(index, e.target.files)}
+                                                            />
+                                                            {member.member_photos?.length > 0 && (
+                                                                <div className="mt-2 text-xs text-gray-600">
+                                                                    {member.member_photos.map((file, fileIndex) => (
+                                                                        <div key={`${file.name}-${fileIndex}`}>{file.name}</div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                        <td className="rounded-r-md border border-gray-200 bg-white px-2 py-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeFamilyMember(index)}
+                                                                className="rounded-md bg-red-100 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-200"
+                                                            >
+                                                                Remove
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <InputError message={getErrorMessage(errors.family_members_details)} className="mt-2" />
+                                </div>
+
+                                <div className="grid gap-6 md:grid-cols-2">
                                     <div>
                                         <InputLabel htmlFor="advance_amount" value="Advance Amount" />
                                         <TextInput
@@ -215,9 +370,7 @@ export default function Create({ flats }) {
                                         />
                                         <InputError message={errors.advance_amount} className="mt-2" />
                                     </div>
-                                </div>
 
-                                <div className="grid gap-6 md:grid-cols-2">
                                     <div>
                                         <InputLabel htmlFor="monthly_rent" value="Monthly Rent" />
                                         <TextInput
@@ -230,7 +383,9 @@ export default function Create({ flats }) {
                                         />
                                         <InputError message={errors.monthly_rent} className="mt-2" />
                                     </div>
+                                </div>
 
+                                <div className="grid gap-6 md:grid-cols-2">
                                     <div>
                                         <InputLabel htmlFor="move_in_date" value="Move-in Date" />
                                         <TextInput
@@ -243,18 +398,18 @@ export default function Create({ flats }) {
                                         />
                                         <InputError message={errors.move_in_date} className="mt-2" />
                                     </div>
-                                </div>
 
-                                <div>
-                                    <InputLabel htmlFor="emergency_contact" value="Emergency Contact" />
-                                    <TextInput
-                                        id="emergency_contact"
-                                        name="emergency_contact"
-                                        value={data.emergency_contact}
-                                        className="mt-1 block w-full"
-                                        onChange={(e) => setData('emergency_contact', e.target.value)}
-                                    />
-                                    <InputError message={errors.emergency_contact} className="mt-2" />
+                                    <div>
+                                        <InputLabel htmlFor="emergency_contact" value="Emergency Contact" />
+                                        <TextInput
+                                            id="emergency_contact"
+                                            name="emergency_contact"
+                                            value={data.emergency_contact}
+                                            className="mt-1 block w-full"
+                                            onChange={(e) => setData('emergency_contact', e.target.value)}
+                                        />
+                                        <InputError message={errors.emergency_contact} className="mt-2" />
+                                    </div>
                                 </div>
 
                                 <div>

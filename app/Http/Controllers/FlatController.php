@@ -28,6 +28,7 @@ class FlatController extends Controller
         $request->validate([
             'building_id' => ['required', 'exists:buildings,id'],
             'flat_no' => ['required', 'string', 'max:100'],
+            'type' => ['required', 'integer', 'in:1,2'],
             'floor' => ['nullable', 'string', 'max:100'],
             'size' => ['nullable', 'string', 'max:100'],
             'rent' => ['required', 'numeric', 'min:0'],
@@ -57,6 +58,7 @@ class FlatController extends Controller
         $request->validate([
             'building_id' => ['required', 'exists:buildings,id'],
             'flat_no' => ['required', 'string', 'max:100'],
+            'type' => ['required', 'integer', 'in:1,2'],
             'floor' => ['nullable', 'string', 'max:100'],
             'size' => ['nullable', 'string', 'max:100'],
             'rent' => ['required', 'numeric', 'min:0'],

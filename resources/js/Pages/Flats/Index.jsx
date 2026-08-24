@@ -1,7 +1,34 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
 
 export default function Index({ flats }) {
+    const [typeFilter, setTypeFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    const [search, setSearch] = useState('');
+    const filteredFlats = flats.filter((flat) => {
+        const typeName = Number(flat.type) === 2 ? 'single room' : 'flat';
+        const searchableText = [
+            flat.flat_no,
+            flat.building?.name,
+            typeName,
+            flat.floor,
+            flat.size,
+            flat.rent,
+            flat.status,
+            flat.electric_meter,
+        ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+
+        return (
+            (!typeFilter || String(flat.type) === typeFilter) &&
+            (!statusFilter || flat.status === statusFilter) &&
+            (!search || searchableText.includes(search.toLowerCase()))
+        );
+    });
+
     return (
         <AuthenticatedLayout
             header={
@@ -23,12 +50,63 @@ export default function Index({ flats }) {
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                        <div className="p-6 overflow-x-auto">
+                        <div className="flex flex-col items-stretch justify-between gap-4 border-b border-gray-200 p-6 md:flex-row md:items-end">
+                            <div className="flex flex-col gap-4 sm:flex-row">
+                                <div className="w-full sm:w-52">
+                                    <label htmlFor="type-filter" className="block text-sm font-medium text-gray-700">
+                                        Filter by Type
+                                    </label>
+                                    <select
+                                        id="type-filter"
+                                        value={typeFilter}
+                                        className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        onChange={(e) => setTypeFilter(e.target.value)}
+                                    >
+                                        <option value="">All Types</option>
+                                        <option value="1">Flat</option>
+                                        <option value="2">Single Room</option>
+                                    </select>
+                                </div>
+                                <div className="w-full sm:w-52">
+                                    <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700">
+                                        Filter by Status
+                                    </label>
+                                    <select
+                                        id="status-filter"
+                                        value={statusFilter}
+                                        className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        onChange={(e) => setStatusFilter(e.target.value)}
+                                    >
+                                        <option value="">All Statuses</option>
+                                        <option value="vacant">Vacant</option>
+                                        <option value="occupied">Occupied</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="w-full md:max-w-sm">
+                                <label htmlFor="flat-search" className="block text-sm font-medium text-gray-700">
+                                    Search Flats
+                                </label>
+                                <input
+                                    id="flat-search"
+                                    type="search"
+                                    value={search}
+                                    placeholder="Flat/room, building, type..."
+                                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto p-6 pt-0">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                             Flat
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                            Type
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                                             Building
@@ -45,11 +123,14 @@ export default function Index({ flats }) {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 bg-white">
-                                    {flats.length > 0 ? (
-                                        flats.map((flat) => (
+                                    {filteredFlats.length > 0 ? (
+                                        filteredFlats.map((flat) => (
                                             <tr key={flat.id}>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     {flat.flat_no}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {Number(flat.type) === 2 ? 'Single Room' : 'Flat'}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {flat.building?.name || '-'}
@@ -72,8 +153,8 @@ export default function Index({ flats }) {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
-                                                No flats added yet.
+                                            <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                                                {typeFilter || search ? 'No flats match your filters.' : 'No flats added yet.'}
                                             </td>
                                         </tr>
                                     )}

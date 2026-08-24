@@ -74,6 +74,60 @@ class TenantNidPhotoUploadTest extends TestCase
         $this->assertCount(2, $tenant->nid_photo ?? []);
     }
 
+    public function test_tenant_create_page_loads_successfully(): void
+    {
+        $user = User::factory()->create();
+        $building = Building::create([
+            'name' => 'Building A',
+            'address' => 'Dhaka',
+        ]);
+        Flat::create([
+            'building_id' => $building->id,
+            'flat_no' => 'A1',
+            'status' => 'vacant',
+            'rent' => 5000,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('tenants.create'));
+
+        $response->assertOk();
+        $response->assertSee('Tenants/Create');
+    }
+
+    public function test_tenant_store_redirects_with_success_flash_message(): void
+    {
+        $user = User::factory()->create();
+        $building = Building::create([
+            'name' => 'Building A',
+            'address' => 'Dhaka',
+        ]);
+        $flat = Flat::create([
+            'building_id' => $building->id,
+            'flat_no' => 'A1',
+            'status' => 'vacant',
+            'rent' => 5000,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('tenants.store'), [
+            'flat_id' => $flat->id,
+            'name' => 'Flash Tenant',
+            'phone' => '01700000000',
+            'nid' => '1234567890',
+            'profession' => 'Engineer',
+            'family_members' => 0,
+            'advance_amount' => 25000,
+            'monthly_rent' => 5000,
+            'move_in_date' => '2026-07-01',
+            'emergency_contact' => '01800000000',
+            'note' => 'Testing flash success',
+        ]);
+
+        $response->assertRedirect(route('tenants.index'));
+
+        $followedResponse = $this->followRedirects($response);
+        $followedResponse->assertSee('Tenant added successfully');
+    }
+
     public function test_edit_tenant_page_only_exposes_available_flats_in_dropdown(): void
     {
         $user = User::factory()->create();
@@ -163,5 +217,93 @@ class TenantNidPhotoUploadTest extends TestCase
         $this->assertStringStartsWith('tenant-nid-photos/', $savedPaths[1]);
         Storage::disk('public')->assertExists($savedPaths[0]);
         Storage::disk('public')->assertExists($savedPaths[1]);
+    }
+
+    public function test_tenant_can_store_family_member_details_with_photos(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $building = Building::create([
+            'name' => 'Building A',
+            'address' => 'Dhaka',
+        ]);
+        $flat = Flat::create([
+            'building_id' => $building->id,
+            'flat_no' => 'A1',
+            'status' => 'vacant',
+            'rent' => 5000,
+        ]);
+
+        $front = UploadedFile::fake()->image('family-front.jpg', 300, 300);
+        $back = UploadedFile::fake()->image('family-back.jpg', 300, 300);
+
+        $response = $this->actingAs($user)->post(route('tenants.store'), [
+            'flat_id' => $flat->id,
+            'name' => 'Family Tenant',
+            'phone' => '01722222222',
+            'nid' => '4444444444',
+            'profession' => 'Doctor',
+            'family_members' => 1,
+            'advance_amount' => 40000,
+            'monthly_rent' => 6000,
+            'move_in_date' => '2026-07-12',
+            'emergency_contact' => '01822222222',
+            'note' => 'Has family members',
+            'family_members_details' => [[
+                'member_name' => 'Jane Doe',
+                'member_photos' => [$front, $back],
+            ]],
+        ]);
+
+        $response->assertRedirect(route('tenants.index'));
+
+        $tenant = Tenant::query()->where('name', 'Family Tenant')->firstOrFail();
+
+        $this->assertCount(1, $tenant->familyMembers);
+        $this->assertSame('Jane Doe', $tenant->familyMembers->first()->member_name);
+        $this->assertCount(2, $tenant->familyMembers->first()->member_photos);
+        Storage::disk('public')->assertExists($tenant->familyMembers->first()->member_photos[0]);
+        Storage::disk('public')->assertExists($tenant->familyMembers->first()->member_photos[1]);
+    }
+
+    public function test_tenant_store_allows_blank_default_family_member_row(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $building = Building::create([
+            'name' => 'Building A',
+            'address' => 'Dhaka',
+        ]);
+        $flat = Flat::create([
+            'building_id' => $building->id,
+            'flat_no' => 'A1',
+            'status' => 'vacant',
+            'rent' => 5000,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('tenants.store'), [
+            'flat_id' => $flat->id,
+            'name' => 'Blank Row Tenant',
+            'phone' => '01733333333',
+            'nid' => '5555555555',
+            'profession' => 'Accountant',
+            'family_members' => 0,
+            'advance_amount' => 20000,
+            'monthly_rent' => 5500,
+            'move_in_date' => '2026-07-13',
+            'emergency_contact' => '01833333333',
+            'note' => 'Blank row should be ignored',
+            'family_members_details' => [[
+                'member_name' => '',
+                'member_photos' => [],
+            ]],
+        ]);
+
+        $response->assertRedirect(route('tenants.index'));
+        $tenant = Tenant::query()->where('name', 'Blank Row Tenant')->firstOrFail();
+        $this->assertSame(0, (int) $tenant->family_members);
+        $this->assertCount(0, $tenant->familyMembers);
     }
 }
