@@ -1,7 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
 
 export default function Show({ tenant }) {
+    const [selectedPhoto, setSelectedPhoto] = useState(null);
     if (!tenant) {
         return (
             <AuthenticatedLayout
@@ -93,12 +95,11 @@ export default function Show({ tenant }) {
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                            {tenant.name} - Tenant Details
+                            Tenant Profile
                         </h2>
 
                         <p className="text-sm text-gray-600">
-                            Full tenant information with family members and
-                            documents
+                            Tenant information and details
                         </p>
                     </div>
 
@@ -123,342 +124,447 @@ export default function Show({ tenant }) {
         >
             <Head title={`${tenant.name} - Tenant Details`} />
 
+            <style>{`
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+
+                .tenant-container {
+                    max-width: 900px;
+                    margin: 0 auto;
+                    background-color: white;
+                    padding: 20px;
+                    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+                }
+
+                .tenant-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 12px;
+                    border-bottom: 3px solid #1e40af;
+                    padding-bottom: 10px;
+                }
+
+                .company-info {
+                    display: flex;
+                    gap: 10px;
+                    align-items: flex-start;
+                    flex: 1;
+                }
+
+                .company-logo {
+                    width: 45px;
+                    height: 45px;
+                    background-color: #1e40af;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-weight: bold;
+                    font-size: 18px;
+                    flex-shrink: 0;
+                }
+
+                .company-details h1 {
+                    color: #1e40af;
+                    font-size: 18px;
+                    margin-bottom: 2px;
+                }
+
+                .company-details p {
+                    color: #666;
+                    font-size: 10px;
+                    margin: 1px 0;
+                }
+
+                .tenant-badge {
+                    background-color: #1e40af;
+                    color: white;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 11px;
+                    min-width: 70px;
+                }
+
+                .tenant-meta {
+                    text-align: right;
+                }
+
+                .tenant-meta-item {
+                    margin-bottom: 3px;
+                    font-size: 10px;
+                }
+
+                .tenant-meta-item strong {
+                    color: #1e40af;
+                    display: inline-block;
+                    width: 85px;
+                }
+
+                .info-sections {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 12px;
+                    margin-bottom: 12px;
+                }
+
+                .info-section h3 {
+                    color: #1e40af;
+                    font-size: 11px;
+                    font-weight: bold;
+                    margin-bottom: 6px;
+                    text-transform: uppercase;
+                    border-bottom: 2px solid #1e40af;
+                    padding-bottom: 4px;
+                }
+
+                .info-section p {
+                    font-size: 10px;
+                    margin-bottom: 2px;
+                    color: #333;
+                    line-height: 1.3;
+                }
+
+                .info-section strong {
+                    display: inline-block;
+                    width: 85px;
+                    color: #1e40af;
+                }
+
+                .family-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 10px;
+                }
+
+                .family-table thead {
+                    background-color: #1e40af;
+                    color: white;
+                }
+
+                .family-table th {
+                    padding: 6px;
+                    text-align: left;
+                    font-size: 10px;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                }
+
+                .family-table td {
+                    padding: 5px 6px;
+                    border-bottom: 1px solid #e0e0e0;
+                    font-size: 10px;
+                }
+
+                .family-table tbody tr:hover {
+                    background-color: #f9f9f9;
+                }
+
+                .nid-photos {
+                    margin-bottom: 10px;
+                }
+
+                .nid-photos h3 {
+                    color: #1e40af;
+                    font-size: 11px;
+                    font-weight: bold;
+                    margin-bottom: 6px;
+                    text-transform: uppercase;
+                    border-bottom: 2px solid #1e40af;
+                    padding-bottom: 4px;
+                }
+
+                .photo-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 8px;
+                }
+
+                .photo-item {
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    overflow: hidden;
+                    background: #f5f5f5;
+                }
+
+                .photo-item img {
+                    width: 100%;
+                    height: 120px;
+                    object-fit: cover;
+                }
+
+                .signature-section {
+                    margin-top: 15px;
+                    padding-top: 15px;
+                    border-top: 1px solid #e0e0e0;
+                    display: flex;
+                    justify-content: center;
+                }
+
+                .signature-box {
+                    text-align: center;
+                }
+
+                .signature-line {
+                    width: 150px;
+                    border-top: 1px solid #333;
+                    margin: 30px 0 2px 0;
+                }
+
+                .signature-box p {
+                    font-size: 10px;
+                    color: #666;
+                    font-weight: bold;
+                    margin: 2px 0;
+                }
+
+                .print-actions {
+                    margin-top: 10px;
+                    text-align: center;
+                }
+
+                .print-button {
+                    background-color: #1e40af;
+                    color: white;
+                    border: none;
+                    padding: 8px 20px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    font-size: 11px;
+                }
+
+                .print-button:hover {
+                    background-color: #1e3a8a;
+                }
+
+                .passport-photo {
+                    width: 50px;
+                    height: 65px;
+                    object-fit: cover;
+                    border: 1px solid #ddd;
+                    border-radius: 2px;
+                    cursor: pointer;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                }
+
+                .passport-photo:hover {
+                    transform: scale(1.05);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                }
+
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: rgba(0, 0, 0, 0.7);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                }
+
+                .modal-content {
+                    background-color: white;
+                    border-radius: 8px;
+                    padding: 20px;
+                    max-width: 600px;
+                    max-height: 80vh;
+                    overflow: auto;
+                    position: relative;
+                }
+
+                .modal-close {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    background: none;
+                    border: none;
+                    font-size: 28px;
+                    cursor: pointer;
+                    color: #666;
+                }
+
+                .modal-close:hover {
+                    color: #000;
+                }
+
+                .modal-image {
+                    width: 100%;
+                    border-radius: 4px;
+                }
+
+                @media print {
+                    body {
+                        background-color: white;
+                        margin: 0;
+                        padding: 0;
+                    }
+
+                    header,
+                    nav,
+                    .navbar,
+                    .print\\:hidden {
+                        display: none !important;
+                    }
+
+                    .tenant-container {
+                        box-shadow: none;
+                        margin: 0;
+                        padding: 10px;
+                        max-width: 100%;
+                    }
+
+                    .print-actions {
+                        display: none;
+                    }
+
+                    .modal-overlay {
+                        display: none !important;
+                    }
+                }
+            `}</style>
+
             <div className="py-8 print:py-0">
                 <div className="mx-auto max-w-6xl sm:px-6 lg:px-8 print:max-w-full print:px-2">
-
-                    {/* =====================================================
-                        MAIN TENANT INFORMATION
-                    ====================================================== */}
-
-                    <div className="mb-6 grid gap-6 print:gap-4 md:grid-cols-2">
-
-                        {/* Personal Information */}
-                        <div className="overflow-hidden rounded-lg bg-white shadow print:border print:border-gray-300 print:shadow-none">
-                            <div className="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 print:bg-gray-100">
-                                <h3 className="text-lg font-semibold text-gray-800">
-                                    Personal Information
-                                </h3>
+                    <div className="tenant-container">
+                        {/* Header */}
+                        <div className="tenant-header">
+                            <div className="company-info">
+                                <div className="company-logo">👤</div>
+                                <div className="company-details">
+                                    <h1>GREEN VIEW RESIDENCE</h1>
+                                    <p>House Rent Management System</p>
+                                    <p>📍 Road-12, Block-A, Bashundhara R/A, Dhaka-1229</p>
+                                    <p>📞 01712-345678, 01898-765432</p>
+                                </div>
                             </div>
-
-                            <div className="space-y-3 p-6 print:p-4">
-
-                                <div className="flex justify-between border-b pb-2">
-                                    <span className="font-medium text-gray-700">
-                                        Name:
-                                    </span>
-
-                                    <span className="text-gray-900">
-                                        {tenant.name || '—'}
-                                    </span>
+                            <div style={{ textAlign: 'center' }}>
+                                <div className="tenant-badge">TENANT PROFILE</div>
+                                <div className="tenant-meta">
+                                    <div className="tenant-meta-item"><strong>Name:</strong> {tenant.name}</div>
+                                    <div className="tenant-meta-item"><strong>Phone:</strong> {tenant.phone}</div>
+                                    <div className="tenant-meta-item"><strong>NID No.:</strong> {tenant.nid || 'N/A'}</div>
                                 </div>
-
-                                <div className="flex justify-between border-b pb-2">
-                                    <span className="font-medium text-gray-700">
-                                        Phone:
-                                    </span>
-
-                                    <span className="text-gray-900">
-                                        {tenant.phone || '—'}
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between border-b pb-2">
-                                    <span className="font-medium text-gray-700">
-                                        NID Number:
-                                    </span>
-
-                                    <span className="text-gray-900">
-                                        {tenant.nid || '—'}
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between border-b pb-2">
-                                    <span className="font-medium text-gray-700">
-                                        Profession:
-                                    </span>
-
-                                    <span className="text-gray-900">
-                                        {tenant.profession || '—'}
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between">
-                                    <span className="font-medium text-gray-700">
-                                        Emergency Contact:
-                                    </span>
-
-                                    <span className="text-gray-900">
-                                        {tenant.emergency_contact || '—'}
-                                    </span>
-                                </div>
-
                             </div>
                         </div>
 
-                        {/* Accommodation & Financial Information */}
-                        <div className="overflow-hidden rounded-lg bg-white shadow print:border print:border-gray-300 print:shadow-none">
-                            <div className="border-b border-gray-200 bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 print:bg-gray-100">
-                                <h3 className="text-lg font-semibold text-gray-800">
-                                    Accommodation & Financial
-                                </h3>
+                        {/* Personal & Accommodation Info */}
+                        <div className="info-sections">
+                            <div className="info-section">
+                                <h3>Personal Information</h3>
+                                <p><strong>Full Name:</strong> {tenant.name}</p>
+                                <p><strong>Phone:</strong> {tenant.phone}</p>
+                                <p><strong>NID:</strong> {tenant.nid || 'N/A'}</p>
+                                <p><strong>Profession:</strong> {tenant.profession || 'N/A'}</p>
+                                <p><strong>Emergency Contact:</strong> {tenant.emergency_contact || 'N/A'}</p>
                             </div>
-
-                            <div className="space-y-3 p-6 print:p-4">
-
-                                <div className="flex justify-between border-b pb-2">
-                                    <span className="font-medium text-gray-700">
-                                        Flat:
-                                    </span>
-
-                                    <span className="text-gray-900">
-                                        {tenant.flat?.flat_no || '—'}
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between border-b pb-2">
-                                    <span className="font-medium text-gray-700">
-                                        Building:
-                                    </span>
-
-                                    <span className="text-gray-900">
-                                        {tenant.flat?.building?.name || '—'}
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between border-b pb-2">
-                                    <span className="font-medium text-gray-700">
-                                        Monthly Rent:
-                                    </span>
-
-                                    <span className="font-semibold text-green-700">
-                                        ৳{tenant.monthly_rent || 0}
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between border-b pb-2">
-                                    <span className="font-medium text-gray-700">
-                                        Advance Amount:
-                                    </span>
-
-                                    <span className="text-gray-900">
-                                        ৳{tenant.advance_amount || 0}
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between">
-                                    <span className="font-medium text-gray-700">
-                                        Status:
-                                    </span>
-
-                                    <span
-                                        className={`rounded-full px-3 py-1 text-sm font-semibold ${
-                                            tenant.status === 'active'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
-                                        }`}
-                                    >
-                                        {tenant.status || '—'}
-                                    </span>
-                                </div>
-
+                            <div className="info-section">
+                                <h3>Accommodation Information</h3>
+                                <p><strong>Flat No.:</strong> {tenant.flat?.flat_no || 'N/A'}</p>
+                                <p><strong>Building:</strong> {tenant.flat?.building?.name || 'N/A'}</p>
+                                <p><strong>Floor:</strong> {tenant.flat?.floor || 'N/A'}</p>
+                                <p><strong>Bedrooms:</strong> {tenant.flat?.bedrooms || 'N/A'}</p>
+                                <p><strong>Bathrooms:</strong> {tenant.flat?.bathrooms || 'N/A'}</p>
                             </div>
                         </div>
-                    </div>
 
-
-                    {/* =====================================================
-                        TENURE INFORMATION
-                    ====================================================== */}
-
-                    <div className="mb-6 overflow-hidden rounded-lg bg-white shadow print:border print:border-gray-300 print:shadow-none">
-
-                        <div className="border-b border-gray-200 bg-gradient-to-r from-purple-50 to-purple-100 px-6 py-4 print:bg-gray-100">
-                            <h3 className="text-lg font-semibold text-gray-800">
-                                Tenure Information
-                            </h3>
-                        </div>
-
-                        <div className="grid gap-4 p-6 print:p-4 md:grid-cols-2">
-
-                            <div>
-                                <span className="block text-sm font-medium text-gray-700">
-                                    Move-in Date
-                                </span>
-
-                                <span className="text-lg text-gray-900">
-                                    {tenant.move_in_date || '—'}
-                                </span>
-                            </div>
-
-                            {tenant.move_out_date && (
-                                <div>
-                                    <span className="block text-sm font-medium text-gray-700">
-                                        Move-out Date
-                                    </span>
-
-                                    <span className="text-lg text-gray-900">
-                                        {tenant.move_out_date}
-                                    </span>
+                        {/* NID Photos */}
+                        {nidPhotos.length > 0 && (
+                            <div className="nid-photos">
+                                <h3>NID Photos</h3>
+                                <div className="photo-grid">
+                                    {nidPhotos.map((photo, index) => (
+                                        <div key={index} className="photo-item">
+                                            <img
+                                                src={`/storage/${photo}`}
+                                                alt={`Tenant NID ${index + 1}`}
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
-                            )}
-
-                            <div>
-                                <span className="block text-sm font-medium text-gray-700">
-                                    Family Members
-                                </span>
-
-                                <span className="text-lg font-semibold text-blue-600">
-                                    {familyMembers.length}
-                                </span>
                             </div>
+                        )}
 
-                        </div>
-                    </div>
-
-
-                    {/* =====================================================
-                        NID PHOTOS
-                    ====================================================== */}
-
-                    {nidPhotos.length > 0 && (
-                        <div className="mb-6 overflow-hidden rounded-lg bg-white shadow print:border print:border-gray-300 print:shadow-none">
-
-                            <div className="border-b border-gray-200 bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-4 print:bg-gray-100">
-                                <h3 className="text-lg font-semibold text-gray-800">
-                                    NID Photos
-                                </h3>
-                            </div>
-
-                            <div className="grid gap-4 p-6 print:grid-cols-4 print:p-4 sm:grid-cols-2 lg:grid-cols-4">
-
-                                {nidPhotos.map((photo, index) => (
-                                    <div
-                                        key={index}
-                                        className="overflow-hidden rounded-lg border border-gray-200"
-                                    >
-                                        <img
-                                            src={`/storage/${photo}`}
-                                            alt={`Tenant NID ${index + 1}`}
-                                            className="h-48 w-full object-cover"
-                                        />
-                                    </div>
-                                ))}
-
-                            </div>
-                        </div>
-                    )}
-
-
-                    {/* =====================================================
-                        FAMILY MEMBERS
-                    ====================================================== */}
-
-                    {familyMembers.length > 0 ? (
-                        <div className="mb-6 overflow-hidden rounded-lg bg-white shadow print:border print:border-gray-300 print:shadow-none">
-
-                            {/* Header */}
-                            <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-indigo-100 px-6 py-4 print:bg-gray-100">
-                                <h3 className="text-lg font-semibold text-gray-800">
+                        {/* Family Members Table */}
+                        {familyMembers.length > 0 && (
+                            <div style={{ marginBottom: '10px' }}>
+                                <h3 style={{ color: '#1e40af', fontSize: '11px', fontWeight: 'bold', marginBottom: '6px', textTransform: 'uppercase', borderBottom: '2px solid #1e40af', paddingBottom: '4px' }}>
                                     Family Members ({familyMembers.length})
                                 </h3>
+                                <table className="family-table">
+                                    <thead>
+                                        <tr>
+                                            <th style={{ width: '35%' }}>Name</th>
+                                            <th style={{ width: '35%' }}>Relation</th>
+                                            <th style={{ width: '30%', textAlign: 'center' }}>Photo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {familyMembers.map((member, index) => {
+                                            const memberPhotos = normalizePhotos(member.member_photos);
+                                            const firstPhoto = memberPhotos.length > 0 ? memberPhotos[0] : null;
+
+                                            return (
+                                                <tr key={member.id || index}>
+                                                    <td>{member.member_name || 'N/A'}</td>
+                                                    <td>{member.relation || 'N/A'}</td>
+                                                    <td style={{ textAlign: 'center' }}>
+                                                        {firstPhoto ? (
+                                                            <img
+                                                                src={`/storage/${firstPhoto}`}
+                                                                alt={member.member_name || 'Family member'}
+                                                                className="passport-photo"
+                                                                onClick={() => setSelectedPhoto(`/storage/${firstPhoto}`)}
+                                                            />
+                                                        ) : (
+                                                            <span style={{ fontSize: '9px', color: '#999' }}>No photo</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
+                        )}
 
-
-                            {/* Members */}
-                            <div className="space-y-4 p-6 print:p-4">
-
-                                {familyMembers.map((member, index) => {
-
-                                    const memberPhotos = normalizePhotos(
-                                        member.member_photos
-                                    );
-
-                                    return (
-                                        <div
-                                            key={member.id || index}
-                                            className="border-l-4 border-indigo-500 bg-indigo-50 p-4 print:border-l-2 print:bg-white"
-                                        >
-
-                                            {/* Member Name */}
-                                            <div className="mb-3">
-                                                <h4 className="text-base font-semibold text-gray-800">
-                                                    {index + 1}.{' '}
-                                                    {member.member_name ||
-                                                        'Unnamed Member'}
-                                                </h4>
-                                            </div>
-
-
-                                            {/* Member Photos */}
-                                            {memberPhotos.length > 0 ? (
-                                                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-
-                                                    {memberPhotos.map(
-                                                        (
-                                                            photo,
-                                                            photoIndex
-                                                        ) => (
-                                                            <div
-                                                                key={
-                                                                    photoIndex
-                                                                }
-                                                                className="overflow-hidden rounded-lg border border-gray-200 bg-white"
-                                                            >
-                                                                <img
-                                                                    src={`/storage/${photo}`}
-                                                                    alt={`${member.member_name || 'Family member'} photo ${photoIndex + 1}`}
-                                                                    className="h-40 w-full object-cover"
-                                                                />
-                                                            </div>
-                                                        )
-                                                    )}
-
-                                                </div>
-                                            ) : (
-                                                <div className="text-sm text-gray-500">
-                                                    No photos uploaded
-                                                </div>
-                                            )}
-
-                                        </div>
-                                    );
-                                })}
-
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="mb-6 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center">
-                            <p className="text-gray-500">
-                                No family members added
-                            </p>
-                        </div>
-                    )}
-
-
-                    {/* =====================================================
-                        ADDITIONAL NOTES
-                    ====================================================== */}
-
-                    {tenant.note && (
-                        <div className="mb-6 overflow-hidden rounded-lg bg-white shadow print:border print:border-gray-300 print:shadow-none">
-
-                            <div className="border-b border-gray-200 bg-gradient-to-r from-yellow-50 to-yellow-100 px-6 py-4 print:bg-gray-100">
-                                <h3 className="text-lg font-semibold text-gray-800">
+                        {/* Additional Notes */}
+                        {tenant.note && (
+                            <div style={{ marginBottom: '10px', padding: '8px', backgroundColor: '#f5f5f5', borderLeft: '3px solid #1e40af' }}>
+                                <h3 style={{ color: '#1e40af', fontSize: '11px', fontWeight: 'bold', marginBottom: '6px', textTransform: 'uppercase' }}>
                                     Additional Notes
                                 </h3>
+                                <p style={{ fontSize: '10px', color: '#333', margin: 0, whiteSpace: 'pre-wrap' }}>
+                                    {tenant.note}
+                                </p>
                             </div>
+                        )}
 
-                            <div className="whitespace-pre-wrap p-6 text-gray-700 print:p-4">
-                                {tenant.note}
+                        {/* Signature Section */}
+                        <div className="signature-section">
+                            <div className="signature-box">
+                                <div className="signature-line"></div>
+                                <p>Authorized Signature</p>
+                                <p style={{ marginTop: '5px' }}>Green View Residence</p>
                             </div>
-
                         </div>
-                    )}
 
-
-                    {/* =====================================================
-                        PRINT FOOTER
-                    ====================================================== */}
+                        {/* Print Actions */}
+                        <div className="print-actions">
+                            <button type="button" className="print-button" onClick={() => window.print()}>
+                                🖨️ Print Profile
+                            </button>
+                        </div>
+                    </div>
 
                     <div className="hidden border-t pt-4 text-center text-xs text-gray-600 print:block">
                         <p>
@@ -470,6 +576,25 @@ export default function Show({ tenant }) {
                             House Rent Management System
                         </p>
                     </div>
+
+                    {/* Photo Preview Modal */}
+                    {selectedPhoto && (
+                        <div className="modal-overlay" onClick={() => setSelectedPhoto(null)}>
+                            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                    className="modal-close"
+                                    onClick={() => setSelectedPhoto(null)}
+                                >
+                                    ✕
+                                </button>
+                                <img
+                                    src={selectedPhoto}
+                                    alt="Preview"
+                                    className="modal-image"
+                                />
+                            </div>
+                        </div>
+                    )}
 
                 </div>
             </div>

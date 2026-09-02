@@ -5,315 +5,472 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>{{ __('Invoice') }} #{{ $invoice->id }}</title>
     <style>
-        :root {
-            color-scheme: light;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            color: #111827;
-            line-height: 1.45;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            background: #f8fafc;
+            font-family: Arial, sans-serif;
+            color: #333;
+            background-color: #f5f5f5;
+            line-height: 1.6;
         }
 
-        .receipt {
-            max-width: 820px;
-            margin: 24px auto;
-            background: #fff;
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 24px 80px rgba(15, 23, 42, 0.12);
+        .invoice-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
 
-        .receipt__header {
-            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-            color: #fff;
-            padding: 32px 40px;
+        /* Header Section */
+        .invoice-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
+            margin-bottom: 12px;
+            border-bottom: 3px solid #156842;
+            padding-bottom: 10px;
         }
 
-        .brand {
+        .company-info {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            flex: 1;
+        }
+
+        .company-logo {
+            width: 45px;
+            height: 45px;
+            background-color: #156842;
+            border-radius: 8px;
             display: flex;
             align-items: center;
-            gap: 18px;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
         }
 
-        .brand__logo {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            background: rgba(255,255,255,0.18);
-            display: grid;
-            place-items: center;
+        .company-details h1 {
+            color: #156842;
+            font-size: 18px;
+            margin-bottom: 2px;
         }
 
-        .brand__logo svg {
-            width: 30px;
-            height: 30px;
-            fill: #fff;
+        .company-details p {
+            color: #666;
+            font-size: 10px;
+            margin: 1px 0;
         }
 
-        .brand__name {
-            font-size: 1.4rem;
-            font-weight: 700;
-            letter-spacing: -0.04em;
+        .invoice-badge {
+            background-color: #156842;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+            min-width: 70px;
         }
 
-        .brand__subtitle {
-            font-size: 0.95rem;
-            opacity: 0.85;
-        }
-
-        .meta {
+        .invoice-meta {
             text-align: right;
         }
 
-        .meta span {
-            display: block;
-            font-size: 0.95rem;
-            opacity: 0.92;
-            margin-bottom: 6px;
+        .invoice-meta-item {
+            margin-bottom: 3px;
+            font-size: 10px;
         }
 
-        .receipt__body {
-            padding: 36px 42px 42px;
+        .invoice-meta-item strong {
+            color: #156842;
+            display: inline-block;
+            width: 85px;
         }
 
-        .section {
-            margin-bottom: 30px;
-        }
-
-        .section__title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.14em;
-            color: #475569;
-            margin-bottom: 16px;
-        }
-
-        .grid-two {
+        /* Information Sections */
+        .info-sections {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 18px;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
         }
 
-        .card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 18px;
-            padding: 22px;
+        .info-section h3 {
+            color: #156842;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #156842;
+            padding-bottom: 4px;
         }
 
-        .card strong {
-            display: block;
+        .info-section p {
+            font-size: 10px;
+            margin-bottom: 2px;
+            color: #333;
+            line-height: 1.3;
+        }
+
+        .info-section strong {
+            display: inline-block;
+            width: 85px;
+            color: #156842;
+        }
+
+        /* Items Table */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
             margin-bottom: 10px;
-            font-weight: 700;
-            color: #0f172a;
         }
 
-        .card p {
-            margin: 0;
-            color: #475569;
-            font-size: 0.95rem;
+        .items-table thead {
+            background-color: #156842;
+            color: white;
         }
 
-        .invoice-table {
+        .items-table th {
+            padding: 6px;
+            text-align: left;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .items-table th:last-child {
+            text-align: right;
+            padding-right: 12px;
+        }
+
+        .items-table td {
+            padding: 5px 6px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 10px;
+        }
+
+        .items-table td:last-child {
+            text-align: right;
+            padding-right: 12px;
+        }
+
+        .items-table tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .items-table tfoot tr {
+            font-weight: bold;
+            background-color: #f5f5f5;
+        }
+
+        .items-table tfoot td {
+            border-bottom: 2px solid #156842;
+            border-top: 2px solid #156842;
+            padding: 5px 6px;
+            font-size: 10px;
+        }
+
+        /* Payment History */
+        .payment-history {
+            margin-bottom: 8px;
+        }
+
+        .payment-history h3 {
+            color: #156842;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #156842;
+            padding-bottom: 4px;
+        }
+
+        .payment-table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        .invoice-table th,
-        .invoice-table td {
-            border-bottom: 1px solid #e2e8f0;
-            padding: 16px 12px;
-            font-size: 0.95rem;
+        .payment-table thead {
+            background-color: #f0f0f0;
         }
 
-        .invoice-table th {
-            color: #475569;
-            font-weight: 700;
-            text-transform: uppercase;
+        .payment-table th {
+            padding: 5px 6px;
+            text-align: left;
+            font-size: 9px;
+            font-weight: bold;
+            border-bottom: 1px solid #156842;
+            color: #156842;
         }
 
-        .invoice-table td.amount {
+        .payment-table td {
+            padding: 4px 6px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 9px;
+        }
+
+        .payment-table td:last-child {
             text-align: right;
         }
 
-        .summary {
-            display: grid;
-            grid-template-columns: 1fr 285px;
-            gap: 18px;
-            align-items: start;
+        .payment-table tfoot tr {
+            font-weight: bold;
+            background-color: #f9f9f9;
         }
 
-        .summary__card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 18px;
-            padding: 24px;
+        .payment-table tfoot td {
+            border-top: 2px solid #156842;
+            border-bottom: 1px solid #156842;
+            padding: 4px 6px;
+            font-size: 9px;
         }
 
-        .summary__item {
+        .payment-table tfoot td:last-child {
+            text-align: right;
+        }
+
+        /* Signature Section */
+        .signature-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
             display: flex;
-            justify-content: space-between;
-            font-size: 0.95rem;
-            color: #475569;
-            margin-bottom: 14px;
+            justify-content: center;
         }
 
-        .summary__item strong {
-            color: #0f172a;
+        .signature-box {
+            text-align: center;
         }
 
-        .summary__item:last-child {
-            margin-bottom: 0;
-            font-weight: 700;
+        .signature-line {
+            width: 150px;
+            border-top: 1px solid #333;
+            margin: 30px 0 2px 0;
         }
 
-        .payments-list {
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .payments-list li {
-            margin-bottom: 10px;
-            color: #475569;
-            font-size: 0.95rem;
+        .signature-box p {
+            font-size: 10px;
+            color: #666;
+            font-weight: bold;
+            margin: 2px 0;
         }
 
         .print-actions {
-            margin-top: 26px;
-            display: inline-flex;
-            gap: 12px;
+            margin-top: 10px;
+            text-align: center;
         }
 
         .print-button {
-            background: #1d4ed8;
+            background-color: #156842;
             color: white;
             border: none;
-            border-radius: 9999px;
-            padding: 14px 24px;
+            padding: 8px 20px;
+            border-radius: 4px;
             cursor: pointer;
-            font-weight: 700;
-            letter-spacing: 0.02em;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .print-button:hover {
+            background-color: #0d4030;
         }
 
         @media print {
-            body { background: #fff; }
-            .receipt { box-shadow: none; margin: 0; border-radius: 0; }
-            .print-actions { display: none; }
+            body {
+                background-color: white;
+                margin: 0;
+                padding: 0;
+            }
+            .invoice-container {
+                box-shadow: none;
+                margin: 0;
+                padding: 10px;
+                max-width: 100%;
+            }
+            .print-actions {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="receipt">
-        <div class="receipt__header">
-            <div class="brand">
-                <div class="brand__logo" aria-hidden="true">
-                    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 36L24 12l12 24H12Z" />
-                    </svg>
-                </div>
-                <div>
-                    <div class="brand__name">{{ config('app.name', 'House Rent') }}</div>
-                    <div class="brand__subtitle">{{ __('Flat Rent Management System') }}</div>
+    <div class="invoice-container">
+        <!-- Header -->
+        <div class="invoice-header">
+            <div class="company-info">
+                <div class="company-logo">🏢</div>
+                <div class="company-details">
+                    <h1>{{ config('app.name', 'House Rent') }}</h1>
+                    <p>{{ __('House Rent Management System') }}</p>
+                    <p>📍 Road-12, Block-A, Bashundhara R/A, Dhaka-1229</p>
+                    <p>📞 01712-345678, 01898-765432</p>
                 </div>
             </div>
-            <div class="meta">
-                <span>{{ __('Invoice') }} #{{ $invoice->id }}</span>
-                <span>{{ __('Date') }}: {{ $invoice->created_at->format('Y-m-d') }}</span>
-                <span>{{ __('Rental Month') }}: {{ \Carbon\Carbon::create($invoice->year, $invoice->month, 1)->format('F Y') }}</span>
+            <div style="text-align: center;">
+                <div class="invoice-badge">INVOICE</div>
+                <div class="invoice-meta">
+                    <div class="invoice-meta-item"><strong>Invoice No:</strong> INV-{{ str_pad($invoice->year, 4, '0', STR_PAD_LEFT) }}-{{ str_pad($invoice->month, 2, '0', STR_PAD_LEFT) }}-{{ str_pad($invoice->id, 4, '0', STR_PAD_LEFT) }}</div>
+                    <div class="invoice-meta-item"><strong>Invoice Date:</strong> {{ $invoice->created_at->format('d F Y') }}</div>
+                    <div class="invoice-meta-item"><strong>For Month:</strong> {{ \Carbon\Carbon::create($invoice->year, $invoice->month, 1)->format('F Y') }}</div>
+                </div>
             </div>
         </div>
 
-        <div class="receipt__body">
-            <div class="section">
-                <div class="section__title">{{ __('Tenant Details') }}</div>
-                <div class="grid-two">
-                    <div class="card">
-                        <strong>{{ __('Tenant') }}</strong>
-                        <p>{{ $invoice->tenant->name }}</p>
-                        <p>{{ $invoice->tenant->phone }}</p>
-                        <p>{{ $invoice->tenant->nid ?? __('NID not provided') }}</p>
-                    </div>
-                    <div class="card">
-                        <strong>{{ __('Property') }}</strong>
-                        <p>{{ $invoice->tenant->flat->flat_no }} — {{ $invoice->tenant->flat->building->name ?? __('Building not set') }}</p>
-                        <p>{{ __('Floor') }}: {{ $invoice->tenant->flat->floor ?? __('N/A') }}</p>
-                    </div>
-                </div>
+        <!-- Tenant and Unit Information -->
+        <div class="info-sections">
+            <div class="info-section">
+                <h3>Tenant Information</h3>
+                <p><strong>Tenant Name:</strong> {{ $invoice->tenant->name }}</p>
+                <p><strong>Phone:</strong> {{ $invoice->tenant->phone }}</p>
+                <p><strong>NID No.:</strong> {{ $invoice->tenant->nid ?? 'N/A' }}</p>
+                <p><strong>Address:</strong> {{ $invoice->tenant->flat->flat_no }}, {{ $invoice->tenant->flat->building->name ?? 'Building not set' }}<br>Road-12, Block-A, Bashundhara R/A, Dhaka</p>
             </div>
+            <div class="info-section">
+                <h3>Unit Information</h3>
+                <p><strong>Unit Type:</strong> Flat</p>
+                <p><strong>Unit No.:</strong> {{ $invoice->tenant->flat->flat_no }}</p>
+                <p><strong>Floor:</strong> {{ $invoice->tenant->flat->floor ?? 'N/A' }}</p>
+                <p><strong>Building:</strong> {{ $invoice->tenant->flat->building->name ?? 'Building not set' }}</p>
+                <p><strong>Bedrooms:</strong> {{ $invoice->tenant->flat->bedrooms ?? 'N/A' }}</p>
+                <p><strong>Bathrooms:</strong> {{ $invoice->tenant->flat->bathrooms ?? 'N/A' }}</p>
+            </div>
+        </div>
 
-            <div class="section">
-                <div class="section__title">{{ __('Invoice Details') }}</div>
-                <table class="invoice-table">
-                    <thead>
-                        <tr>
-                            <th>{{ __('Particulars') }}</th>
-                            <th class="amount">{{ __('Amount') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if($invoice->house_rent)
-                        <tr><td>{{ __('House Rent') }}</td><td class="amount">৳{{ number_format($invoice->house_rent,2) }}</td></tr>
-                        @endif
-                        @if($invoice->electricity_bill)
-                        <tr><td>{{ __('Electricity') }}</td><td class="amount">৳{{ number_format($invoice->electricity_bill,2) }}</td></tr>
-                        @endif
-                        @if($invoice->gas_bill)
-                        <tr><td>{{ __('Gas') }}</td><td class="amount">৳{{ number_format($invoice->gas_bill,2) }}</td></tr>
-                        @endif
-                        @if($invoice->water_bill)
-                        <tr><td>{{ __('Water') }}</td><td class="amount">৳{{ number_format($invoice->water_bill,2) }}</td></tr>
-                        @endif
-                        @if($invoice->service_charge)
-                        <tr><td>{{ __('Service Charge') }}</td><td class="amount">৳{{ number_format($invoice->service_charge,2) }}</td></tr>
-                        @endif
-                        @if($invoice->garage_bill)
-                        <tr><td>{{ __('Garage') }}</td><td class="amount">৳{{ number_format($invoice->garage_bill,2) }}</td></tr>
-                        @endif
-                        @if($invoice->internet_bill)
-                        <tr><td>{{ __('Internet') }}</td><td class="amount">৳{{ number_format($invoice->internet_bill,2) }}</td></tr>
-                        @endif
-                        @if($invoice->other_charges)
-                        <tr><td>{{ __('Other Charges') }}</td><td class="amount">৳{{ number_format($invoice->other_charges,2) }}</td></tr>
-                        @endif
-                    </tbody>
-                </table>
-            </div>
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">SL</th>
+                    <th style="width: 70%;">Description</th>
+                    <th style="width: 20%; text-align: right;">Amount (৳)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php $slNo = 1; ?>
+                @if($invoice->house_rent)
+                <tr>
+                    <td>{{ $slNo++ }}</td>
+                    <td>{{ __('House Rent') }}</td>
+                    <td>{{ number_format($invoice->house_rent, 2) }}</td>
+                </tr>
+                @endif
+                @if($invoice->gas_bill)
+                <tr>
+                    <td>{{ $slNo++ }}</td>
+                    <td>{{ __('Gas Bill') }}</td>
+                    <td>{{ number_format($invoice->gas_bill, 2) }}</td>
+                </tr>
+                @endif
+                @if($invoice->water_bill)
+                <tr>
+                    <td>{{ $slNo++ }}</td>
+                    <td>{{ __('Water Bill') }}</td>
+                    <td>{{ number_format($invoice->water_bill, 2) }}</td>
+                </tr>
+                @endif
+                @if($invoice->service_charge)
+                <tr>
+                    <td>{{ $slNo++ }}</td>
+                    <td>{{ __('Service Charge') }}</td>
+                    <td>{{ number_format($invoice->service_charge, 2) }}</td>
+                </tr>
+                @endif
+                @if($invoice->electricity_bill)
+                <tr>
+                    <td>{{ $slNo++ }}</td>
+                    <td>{{ __('Electricity Bill (As per Meter)') }}</td>
+                    <td>{{ number_format($invoice->electricity_bill, 2) }}</td>
+                </tr>
+                @endif
+                @if($invoice->internet_bill)
+                <tr>
+                    <td>{{ $slNo++ }}</td>
+                    <td>{{ __('Internet Bill') }}</td>
+                    <td>{{ number_format($invoice->internet_bill, 2) }}</td>
+                </tr>
+                @endif
+                @if($invoice->garage_bill)
+                <tr>
+                    <td>{{ $slNo++ }}</td>
+                    <td>{{ __('Others (Garage Charge)') }}</td>
+                    <td>{{ number_format($invoice->garage_bill, 2) }}</td>
+                </tr>
+                @endif
+                @if($invoice->other_charges)
+                <tr>
+                    <td>{{ $slNo++ }}</td>
+                    <td>{{ __('Others (Other Charges)') }}</td>
+                    <td>{{ number_format($invoice->other_charges, 2) }}</td>
+                </tr>
+                @endif
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2">Total Amount</td>
+                    <td>{{ number_format($invoice->total_amount, 2) }}</td>
+                </tr>
+            </tfoot>
+        </table>
 
-            <div class="section">
-                <div class="section__title">{{ __('Summary') }}</div>
-                <div class="summary">
-                    <div class="summary__card">
-                        <div class="summary__item"><span>{{ __('Total Amount') }}</span><strong>৳{{ number_format($invoice->total_amount,2) }}</strong></div>
-                        <div class="summary__item"><span>{{ __('Paid Amount') }}</span><strong>৳{{ number_format($invoice->paid_amount,2) }}</strong></div>
-                        <div class="summary__item"><span>{{ __('Due Amount') }}</span><strong>৳{{ number_format($invoice->due_amount,2) }}</strong></div>
-                        <div class="summary__item"><span>{{ __('Status') }}</span><strong>{{ ucfirst($invoice->status) }}</strong></div>
-                    </div>
-                    <div>
-                        <div class="section__title">{{ __('Payment History') }}</div>
-                        <ul class="payments-list">
-                            @forelse($invoice->payments as $payment)
-                                <li>{{ $payment->payment_date }} — ৳{{ number_format($payment->amount,2) }} — {{ ucfirst($payment->payment_method) }}</li>
-                            @empty
-                                <li>{{ __('No payments recorded yet.') }}</li>
-                            @endforelse
-                        </ul>
-                    </div>
-                </div>
-            </div>
+        <!-- Payment History -->
+        <div class="payment-history">
+            <h3>Payment History</h3>
+            <table class="payment-table">
+                <thead>
+                    <tr>
+                        <th style="width: 10%;">SL</th>
+                        <th style="width: 25%;">Payment Date</th>
+                        <th style="width: 30%;">Payment Method</th>
+                        <th style="width: 25%;">Transaction No.</th>
+                        <th style="width: 10%; text-align: right;">Amount (৳)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($invoice->payments as $index => $payment)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}</td>
+                        <td>{{ ucfirst($payment->payment_method) }}</td>
+                        <td>{{ $payment->transaction_no ?? 'N/A' }}</td>
+                        <td>{{ number_format($payment->amount, 2) }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 20px;">No payments recorded yet.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4">Total Paid</td>
+                        <td>{{ number_format($invoice->paid_amount, 2) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
 
-            <div class="print-actions">
-                <button type="button" class="print-button" onclick="window.print()">{{ __('Print Receipt') }}</button>
+        <!-- Signature Section -->
+        <div class="signature-section">
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <p>Authorized Signature</p>
+                <p style="margin-top: 5px;">{{ config('app.name', 'House Rent') }}</p>
             </div>
+        </div>
+
+        <!-- Print Actions -->
+        <div class="print-actions">
+            <button type="button" class="print-button" onclick="window.print()">🖨️ Print Receipt</button>
         </div>
     </div>
 </body>
 </html>
+
