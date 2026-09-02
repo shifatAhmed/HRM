@@ -20,6 +20,12 @@ class PaymentController extends Controller
 
         $invoice = RentInvoice::with('tenant.flat.building')->findOrFail($request->invoice_id);
 
+        if ((float) $request->amount > (float) $invoice->due_amount) {
+            return redirect()->back()
+                ->withErrors(['amount' => 'Payment cannot be greater than the remaining due amount of ৳' . number_format((float) $invoice->due_amount, 2) . '.'])
+                ->withInput();
+        }
+
         $payment = Payment::create([
             'invoice_id' => $invoice->id,
             'payment_method' => $request->payment_method,
@@ -46,6 +52,6 @@ class PaymentController extends Controller
             $smsService->send($invoice->tenant->phone, $message);
         }
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Payment recorded successfully.');
     }
 }

@@ -1,11 +1,13 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import InputLabel from '@/Components/InputLabel';
+import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 
 export default function Show({ invoice }) {
-    const { data, setData, post, processing } = useForm({
+    const { flash = {} } = usePage().props;
+    const { data, setData, post, processing, errors } = useForm({
         invoice_id: invoice.id,
         amount: 0,
         payment_method: 'cash',
@@ -24,6 +26,12 @@ export default function Show({ invoice }) {
             <div className="py-12">
                 <div className="mx-auto max-w-3xl sm:px-6 lg:px-8">
                     <div className="bg-white p-6 shadow sm:rounded-lg">
+                        {flash.success && (
+                            <div className="mb-6 rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+                                {flash.success}
+                            </div>
+                        )}
+
                         <div className="mb-6">
                             <div className="text-sm text-gray-600">Tenant: {invoice.tenant?.name} — {invoice.tenant?.flat?.flat_no}</div>
                             <div className="text-lg font-semibold">Total: ৳{invoice.total_amount}</div>
@@ -60,7 +68,8 @@ export default function Show({ invoice }) {
                                 <input type="hidden" name="invoice_id" value={data.invoice_id} />
                                 <div>
                                     <InputLabel value="Amount" />
-                                    <TextInput type="number" value={data.amount} onChange={(e) => setData('amount', e.target.value)} className="mt-1 block w-full" />
+                                    <TextInput type="number" min="0.01" max={invoice.due_amount} step="0.01" value={data.amount} onChange={(e) => setData('amount', e.target.value)} className="mt-1 block w-full" />
+                                    <InputError message={errors.amount} className="mt-2" />
                                 </div>
                                 <div>
                                     <InputLabel value="Payment Method" />
