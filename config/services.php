@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'notifybd' => [
+        'url' => env('NOTIFYBD_SMS_URL', 'https://portal.notifybd.com/api/v1/sms/send'),
+        'api_key' => env('NOTIFYBD_API_KEY'),
+        'type' => env('NOTIFYBD_SMS_TYPE', 'text'),
+        'sender_id' => env('NOTIFYBD_SENDER_ID'),
+    ],
+
 ];

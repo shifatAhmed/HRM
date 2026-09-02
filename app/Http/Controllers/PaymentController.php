@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\RentInvoice;
+use App\Services\NotifyBdSmsService;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-    public function store(Request $request)
+    public function store(Request $request, NotifyBdSmsService $smsService)
     {
         $request->validate([
             'invoice_id' => ['required','exists:rent_invoices,id'],
@@ -17,7 +18,7 @@ class PaymentController extends Controller
             'payment_date' => ['required','date'],
         ]);
 
-        $invoice = RentInvoice::findOrFail($request->invoice_id);
+        $invoice = RentInvoice::with('tenant.flat.building')->findOrFail($request->invoice_id);
 
         $payment = Payment::create([
             'invoice_id' => $invoice->id,
@@ -35,6 +36,15 @@ class PaymentController extends Controller
             $invoice->status = 'partial';
         }
         $invoice->save();
+
+        if ($invoice->tenant?->phone) {
+            $flatName = $invoice->tenant->flat?->flat_no ?? 'your flat';
+            $paymentAmount = number_format((float) $payment->amount, 2, '.', '');
+            $dueAmount = number_format((float) $invoice->due_amount, 2, '.', '');
+            $message = "Dear {$invoice->tenant->name}, payment of ৳{$paymentAmount} received for {$flatName} invoice #{$invoice->id}. Remaining due: ৳{$dueAmount}. Thank you.";
+
+            $smsService->send($invoice->tenant->phone, $message);
+        }
 
         return redirect()->back();
     }

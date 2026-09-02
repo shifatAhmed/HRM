@@ -58,7 +58,20 @@ export default function Index({ invoices }) {
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">৳{inv.due_amount}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{inv.status}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <Link href={route('invoices.show', inv.id)} className="text-indigo-600 hover:text-indigo-900">View</Link>
+                                                    <a
+                                                        href={route('invoices.receipt', inv.id)}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-indigo-600 hover:text-indigo-900"
+                                                    >
+                                                        View
+                                                    </a>
+                                                    <Link
+                                                        href={route('invoices.show', inv.id)}
+                                                        className="ml-4 text-green-600 hover:text-green-900"
+                                                    >
+                                                        Pay
+                                                    </Link>
                                                 </td>
                                             </tr>
                                         ))
