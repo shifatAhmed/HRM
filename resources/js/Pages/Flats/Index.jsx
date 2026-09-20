@@ -1,10 +1,12 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function Index({ flats }) {
+    const { url } = usePage();
+    const initialStatus = new URLSearchParams(url.split('?')[1] || '').get('status') || '';
     const [typeFilter, setTypeFilter] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState(initialStatus);
     const [search, setSearch] = useState('');
     const filteredFlats = flats.filter((flat) => {
         const typeName = Number(flat.type) === 2 ? 'single room' : 'flat';

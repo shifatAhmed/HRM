@@ -1,3 +1,5 @@
+import { Link } from '@inertiajs/react';
+
 export default function StatCard({
     title,
     value,
@@ -6,9 +8,13 @@ export default function StatCard({
     accent,
     iconBg,
     iconColor,
+    href,
 }) {
     return (
-        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+        <Link
+            href={href}
+            className="group relative block overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        >
             <div
                 className="absolute inset-x-0 top-0 h-1"
                 style={{ backgroundColor: accent }}
@@ -28,6 +34,6 @@ export default function StatCard({
                     <Icon className="h-6 w-6" />
                 </div>
             </div>
-        </div>
+        </Link>
     );
 }
