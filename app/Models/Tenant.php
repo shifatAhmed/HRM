@@ -16,6 +16,7 @@ class Tenant extends Model
         'name',
         'phone',
         'nid',
+        'date_of_birth',
         'nid_photo',
         'profession',
         'family_members',
@@ -30,6 +31,7 @@ class Tenant extends Model
     ];
 
     protected $casts = [
+        'date_of_birth' => 'date:Y-m-d',
         'nid_photo' => 'array',
     ];
 

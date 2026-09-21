@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Flat;
 use App\Models\FamilyMemberDetail;
 use App\Models\Tenant;
+use App\Services\OpenAiNidService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -26,6 +27,21 @@ class TenantController extends Controller
         ]);
     }
 
+    public function scanNid(Request $request, OpenAiNidService $openAiNidService)
+    {
+        $validated = $request->validate([
+            'nid_image' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
+        ]);
+
+        try {
+            return response()->json([
+                'data' => $openAiNidService->extract($validated['nid_image']),
+            ]);
+        } catch (\RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -33,6 +49,7 @@ class TenantController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'nid' => ['nullable', 'string', 'max:100'],
+            'date_of_birth' => ['nullable', 'date'],
             'nid_photo' => ['nullable', 'array'],
             'nid_photo.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5048'],
             'profession' => ['nullable', 'string', 'max:255'],
@@ -61,6 +78,7 @@ class TenantController extends Controller
                 'name',
                 'phone',
                 'nid',
+                'date_of_birth',
                 'profession',
                 'advance_amount',
                 'monthly_rent',
@@ -109,6 +127,7 @@ class TenantController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'nid' => ['nullable', 'string', 'max:100'],
+            'date_of_birth' => ['nullable', 'date'],
             'nid_photo' => ['nullable', 'array'],
             'nid_photo.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'profession' => ['nullable', 'string', 'max:255'],
@@ -140,6 +159,7 @@ class TenantController extends Controller
                 'name',
                 'phone',
                 'nid',
+                'date_of_birth',
                 'profession',
                 'advance_amount',
                 'monthly_rent',

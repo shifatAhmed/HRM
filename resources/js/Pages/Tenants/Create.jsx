@@ -5,6 +5,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
+import axios from 'axios';
 import { useEffect, useState } from 'react';
 
 const createFamilyMember = () => ({
@@ -59,6 +60,7 @@ export default function Create({ flats }) {
         name: '',
         phone: '',
         nid: '',
+        date_of_birth: '',
         nid_photo: [],
         profession: '',
         family_members: 1,
@@ -70,6 +72,8 @@ export default function Create({ flats }) {
         note: '',
     });
     const [previewUrls, setPreviewUrls] = useState([]);
+    const [scanningNid, setScanningNid] = useState(false);
+    const [nidScanError, setNidScanError] = useState('');
 
     useEffect(() => {
         const selectedFlat = flats.find((flat) => Number(flat.id) === Number(data.flat_id));
@@ -110,6 +114,40 @@ export default function Create({ flats }) {
         updateFamilyMember(index, 'member_photos', Array.from(files || []));
     };
 
+    const scanNid = async () => {
+        const image = data.nid_photo?.[0];
+
+        if (!(image instanceof File)) {
+            setNidScanError('Select a NID image first.');
+            return;
+        }
+
+        setScanningNid(true);
+        setNidScanError('');
+
+        const formData = new FormData();
+        formData.append('nid_image', image);
+
+        try {
+            const response = await axios.post(route('tenants.scan-nid'), formData);
+            const extracted = response.data.data || {};
+
+            setData((currentData) => ({
+                ...currentData,
+                name: extracted.name || currentData.name,
+                date_of_birth: extracted.date_of_birth || currentData.date_of_birth,
+                nid: extracted.nid || currentData.nid,
+            }));
+        } catch (error) {
+            setNidScanError(
+                error.response?.data?.message ||
+                    'The NID could not be read. Please try a clearer image.',
+            );
+        } finally {
+            setScanningNid(false);
+        }
+    };
+
     const submit = (e) => {
         e.preventDefault();
 
@@ -119,6 +157,7 @@ export default function Create({ flats }) {
         formData.append('name', data.name);
         formData.append('phone', data.phone || '');
         formData.append('nid', data.nid || '');
+        formData.append('date_of_birth', data.date_of_birth || '');
         formData.append('profession', data.profession || '');
         formData.append('family_members', String(data.family_members_details?.length ?? 0));
         formData.append('advance_amount', data.advance_amount ?? 0);
@@ -207,6 +246,56 @@ export default function Create({ flats }) {
                                 </div>
 
                                 <div>
+                                    <InputLabel htmlFor="nid_photo" value="NID Photos (Front & Back)" />
+                                    <input
+                                        id="nid_photo"
+                                        name="nid_photo"
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        onChange={(e) => {
+                                            const selectedFiles = Array.from(e.target.files || []);
+                                            setData('nid_photo', selectedFiles);
+                                            setNidScanError('');
+
+                                            const nextPreviewUrls = selectedFiles.map((file) => URL.createObjectURL(file));
+                                            setPreviewUrls((currentPreviewUrls) => {
+                                                currentPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+                                                return nextPreviewUrls;
+                                            });
+                                        }}
+                                    />
+                                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                                        <p className="text-sm text-gray-500">Upload both sides of the NID (front and back).</p>
+                                        <button
+                                            type="button"
+                                            onClick={scanNid}
+                                            disabled={scanningNid || !(data.nid_photo?.[0] instanceof File)}
+                                            className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {scanningNid ? 'Reading NID...' : 'Read NID with AI'}
+                                        </button>
+                                    </div>
+                                    {nidScanError && (
+                                        <p className="mt-2 text-sm text-red-600">{nidScanError}</p>
+                                    )}
+                                    {previewUrls.length > 0 && (
+                                        <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+                                            {previewUrls.map((url, index) => (
+                                                <img
+                                                    key={`${url}-${index}`}
+                                                    src={url}
+                                                    alt={`NID preview ${index + 1}`}
+                                                    className="h-24 w-full rounded-md border border-gray-200 object-cover"
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                    <InputError message={getErrorMessage(errors.nid_photo)} className="mt-2" />
+                                </div>
+
+                                <div>
                                     <InputLabel htmlFor="name" value="Tenant Name" />
                                     <TextInput
                                         id="name"
@@ -245,39 +334,16 @@ export default function Create({ flats }) {
                                 </div>
 
                                 <div>
-                                    <InputLabel htmlFor="nid_photo" value="NID Photos (Front & Back)" />
-                                    <input
-                                        id="nid_photo"
-                                        name="nid_photo"
-                                        type="file"
-                                        multiple
-                                        accept="image/*"
-                                        className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                        onChange={(e) => {
-                                            const selectedFiles = Array.from(e.target.files || []);
-                                            setData('nid_photo', selectedFiles);
-
-                                            const nextPreviewUrls = selectedFiles.map((file) => URL.createObjectURL(file));
-                                            setPreviewUrls((currentPreviewUrls) => {
-                                                currentPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-                                                return nextPreviewUrls;
-                                            });
-                                        }}
+                                    <InputLabel htmlFor="date_of_birth" value="Date of Birth" />
+                                    <TextInput
+                                        id="date_of_birth"
+                                        name="date_of_birth"
+                                        type="date"
+                                        value={data.date_of_birth}
+                                        className="mt-1 block w-full"
+                                        onChange={(e) => setData('date_of_birth', e.target.value)}
                                     />
-                                    <p className="mt-1 text-sm text-gray-500">Upload both sides of the NID (front and back).</p>
-                                    {previewUrls.length > 0 && (
-                                        <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
-                                            {previewUrls.map((url, index) => (
-                                                <img
-                                                    key={`${url}-${index}`}
-                                                    src={url}
-                                                    alt={`NID preview ${index + 1}`}
-                                                    className="h-24 w-full rounded-md border border-gray-200 object-cover"
-                                                />
-                                            ))}
-                                        </div>
-                                    )}
-                                    <InputError message={getErrorMessage(errors.nid_photo)} className="mt-2" />
+                                    <InputError message={errors.date_of_birth} className="mt-2" />
                                 </div>
 
                                 <div>

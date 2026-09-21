@@ -27,6 +27,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('buildings', BuildingController::class)->except(['show']);
     Route::resource('flats', FlatController::class)->except(['show']);
     Route::resource('tenants', TenantController::class);
+    Route::post('tenants/scan-nid', [TenantController::class, 'scanNid'])->name('tenants.scan-nid');
     Route::resource('invoices', RentInvoiceController::class)->except(['edit','update','destroy']);
     Route::post('payments', [PaymentController::class, 'store'])->name('payments.store');
     Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
