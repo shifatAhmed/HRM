@@ -32,6 +32,12 @@ const createFamilyMember = (member = null) => {
     return {
         id: member?.id ?? null,
         member_name: member?.member_name ?? '',
+        member_photo: null,
+        existing_member_photo: member?.member_photo
+            ? (member.member_photo.startsWith('http://') || member.member_photo.startsWith('https://') || member.member_photo.startsWith('/storage/'))
+                ? member.member_photo
+                : `/storage/${member.member_photo}`
+            : '',
         member_photos: [],
         existing_photos: existingPhotos.map((photo) => {
             // If already a full URL, don't add /storage/
@@ -131,6 +137,7 @@ export default function Edit({ tenant, flats }) {
         name: tenant?.name ?? '',
         phone: tenant?.phone ?? '',
         nid: tenant?.nid ?? '',
+        photo: null,
         nid_photo: [],
         profession: tenant?.profession ?? '',
 
@@ -168,6 +175,12 @@ export default function Edit({ tenant, flats }) {
         : [];
 
     const [previewUrls, setPreviewUrls] = useState([]);
+    const [tenantPhotoPreviewUrl, setTenantPhotoPreviewUrl] = useState('');
+    const existingTenantPhotoUrl = tenant?.photo
+        ? (tenant.photo.startsWith('http://') || tenant.photo.startsWith('https://') || tenant.photo.startsWith('/storage/'))
+            ? tenant.photo
+            : `/storage/${tenant.photo}`
+        : '';
 
     /*
     |--------------------------------------------------------------------------
@@ -235,6 +248,14 @@ export default function Edit({ tenant, flats }) {
             );
         };
     }, [previewUrls]);
+
+    useEffect(() => {
+        return () => {
+            if (tenantPhotoPreviewUrl) {
+                URL.revokeObjectURL(tenantPhotoPreviewUrl);
+            }
+        };
+    }, [tenantPhotoPreviewUrl]);
 
     /*
     |--------------------------------------------------------------------------
@@ -343,6 +364,10 @@ export default function Edit({ tenant, flats }) {
             data.nid || ''
         );
 
+        if (data.photo instanceof File) {
+            formData.append('photo', data.photo);
+        }
+
         formData.append(
             'profession',
             data.profession || ''
@@ -427,6 +452,13 @@ export default function Edit({ tenant, flats }) {
                 `family_members_details[${index}][member_name]`,
                 member.member_name || ''
             );
+
+            if (member.member_photo instanceof File) {
+                formData.append(
+                    `family_members_details[${index}][member_photo]`,
+                    member.member_photo
+                );
+            }
 
             (
                 member.member_photos || []
@@ -594,7 +626,8 @@ export default function Edit({ tenant, flats }) {
                                     </div>
                                 </div>
 
-                                {/* NID Photos */}
+                                {/* NID and person photos */}
+                                <div className="grid gap-6 md:grid-cols-2">
                                 <div>
                                     <InputLabel
                                         htmlFor="nid_photo"
@@ -713,6 +746,28 @@ export default function Edit({ tenant, flats }) {
                                         className="mt-2"
                                     />
                                 </div>
+                                <div>
+                                    <InputLabel htmlFor="photo" value="Person Photo" />
+                                    <input
+                                        id="photo"
+                                        name="photo"
+                                        type="file"
+                                        accept="image/*"
+                                        className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0] || null;
+                                            setData('photo', file);
+                                            setTenantPhotoPreviewUrl(file ? URL.createObjectURL(file) : '');
+                                        }}
+                                    />
+                                    {tenantPhotoPreviewUrl ? (
+                                        <img src={tenantPhotoPreviewUrl} alt="Selected tenant portrait" className="mt-3 h-24 w-24 rounded-md border border-gray-200 object-cover" />
+                                    ) : existingTenantPhotoUrl ? (
+                                        <img src={existingTenantPhotoUrl} alt="Current tenant portrait" className="mt-3 h-24 w-24 rounded-md border border-gray-200 object-cover" />
+                                    ) : null}
+                                    <InputError message={errors.photo} className="mt-2" />
+                                </div>
+                                </div>
 
                                 {/* Profession */}
                                 <div>
@@ -775,6 +830,10 @@ export default function Edit({ tenant, flats }) {
                                                     <th className="px-2 pb-2 text-left text-sm font-medium text-gray-600">
                                                         NID
                                                         Photos
+                                                    </th>
+
+                                                    <th className="px-2 pb-2 text-left text-sm font-medium text-gray-600">
+                                                        Person Photo
                                                     </th>
 
                                                     <th className="px-2 pb-2 text-left text-sm font-medium text-gray-600">
@@ -895,6 +954,21 @@ export default function Edit({ tenant, flats }) {
                                                                         )}
                                                                     </div>
                                                                 )}
+                                                            </td>
+
+                                                            <td className="border border-gray-200 bg-white px-2 py-2">
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+                                                                    onChange={(e) => updateFamilyMember(index, 'member_photo', e.target.files?.[0] || null)}
+                                                                />
+                                                                {member.member_photo ? (
+                                                                    <p className="mt-2 text-xs text-gray-600">{member.member_photo.name}</p>
+                                                                ) : member.existing_member_photo ? (
+                                                                    <img src={member.existing_member_photo} alt={`Portrait of ${member.member_name || 'family member'}`} className="mt-2 h-16 w-16 rounded-md border border-gray-200 object-cover" />
+                                                                ) : null}
+                                                                <InputError message={errors[`family_members_details.${index}.member_photo`]} className="mt-2" />
                                                             </td>
 
                                                             {/* Remove */}

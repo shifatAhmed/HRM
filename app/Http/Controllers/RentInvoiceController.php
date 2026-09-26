@@ -6,6 +6,7 @@ use App\Models\Flat;
 use App\Models\RentInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class RentInvoiceController extends Controller
@@ -30,7 +31,7 @@ class RentInvoiceController extends Controller
         ];
 
         if ($request->filled('tenant_id')) {
-            $validationRules['tenant_id'] = ['required','exists:tenants,id'];
+            $validationRules['tenant_id'] = ['required', Rule::exists('tenants', 'id')->where('account_id', $request->user()->account_id)];
             $validationRules['house_rent'] = ['nullable','numeric','min:0'];
             $validationRules['electricity_bill'] = ['nullable','numeric','min:0'];
             $validationRules['gas_bill'] = ['nullable','numeric','min:0'];

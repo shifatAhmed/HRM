@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Flat;
 use App\Models\FamilyMemberDetail;
 use App\Models\Tenant;
-use App\Services\OpenAiNidService;
+use App\Services\TesseractNidService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class TenantController extends Controller
@@ -27,7 +28,7 @@ class TenantController extends Controller
         ]);
     }
 
-    public function scanNid(Request $request, OpenAiNidService $openAiNidService)
+    public function scanNid(Request $request, TesseractNidService $tesseractNidService)
     {
         $validated = $request->validate([
             'nid_image' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'],
@@ -35,7 +36,7 @@ class TenantController extends Controller
 
         try {
             return response()->json([
-                'data' => $openAiNidService->extract($validated['nid_image']),
+                'data' => $tesseractNidService->extract($validated['nid_image']),
             ]);
         } catch (\RuntimeException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
@@ -45,11 +46,12 @@ class TenantController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'flat_id' => ['required', 'exists:flats,id'],
+            'flat_id' => ['required', Rule::exists('flats', 'id')->where('account_id', $request->user()->account_id)],
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'nid' => ['nullable', 'string', 'max:100'],
             'date_of_birth' => ['nullable', 'date'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5048'],
             'nid_photo' => ['nullable', 'array'],
             'nid_photo.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5048'],
             'profession' => ['nullable', 'string', 'max:255'],
@@ -60,6 +62,7 @@ class TenantController extends Controller
             'note' => ['nullable', 'string'],
             'family_members_details' => ['nullable', 'array'],
             'family_members_details.*.member_name' => ['nullable', 'string', 'max:255'],
+            'family_members_details.*.member_photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5048'],
             'family_members_details.*.member_photos' => ['nullable', 'array'],
             'family_members_details.*.member_photos.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ]);
@@ -67,7 +70,10 @@ class TenantController extends Controller
         return DB::transaction(function () use ($request) {
             $nidPhotos = $this->storeNidPhotos($request);
 
-            $familyMembersDetails = $this->filterFamilyMembers($request->input('family_members_details', []));
+            $familyMembersDetails = $this->filterFamilyMembers(
+                $request->input('family_members_details', []),
+                $request->file('family_members_details', [])
+            );
             $familyMembersCount = count($familyMembersDetails);
             if ($familyMembersCount === 0) {
                 $familyMembersCount = $request->input('family_members', 0);
@@ -87,6 +93,7 @@ class TenantController extends Controller
                 'note',
             ]), [
                 'status' => 'active',
+                'photo' => $request->file('photo')?->store('tenant-photos', 'public'),
                 'nid_photo' => $nidPhotos,
                 'family_members' => $familyMembersCount,
             ]));
@@ -123,11 +130,12 @@ class TenantController extends Controller
     public function update(Request $request, Tenant $tenant)
     {
         $request->validate([
-            'flat_id' => ['required', 'exists:flats,id'],
+            'flat_id' => ['required', Rule::exists('flats', 'id')->where('account_id', $request->user()->account_id)],
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
             'nid' => ['nullable', 'string', 'max:100'],
             'date_of_birth' => ['nullable', 'date'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5048'],
             'nid_photo' => ['nullable', 'array'],
             'nid_photo.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'profession' => ['nullable', 'string', 'max:255'],
@@ -139,8 +147,9 @@ class TenantController extends Controller
             'emergency_contact' => ['nullable', 'string', 'max:255'],
             'note' => ['nullable', 'string'],
             'family_members_details' => ['nullable', 'array'],
-            'family_members_details.*.id' => ['nullable', 'integer', 'exists:family_member_details,id'],
+            'family_members_details.*.id' => ['nullable', 'integer', Rule::exists('family_member_details', 'id')->where('account_id', $request->user()->account_id)],
             'family_members_details.*.member_name' => ['nullable', 'string', 'max:255'],
+            'family_members_details.*.member_photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5048'],
             'family_members_details.*.member_photos' => ['nullable', 'array'],
             'family_members_details.*.member_photos.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ]);
@@ -148,10 +157,21 @@ class TenantController extends Controller
         return DB::transaction(function () use ($request, $tenant) {
             $nidPhotos = $this->storeNidPhotos($request, $tenant);
 
-            $familyMembersDetails = $this->filterFamilyMembers($request->input('family_members_details', []));
+            $familyMembersDetails = $this->filterFamilyMembers(
+                $request->input('family_members_details', []),
+                $request->file('family_members_details', [])
+            );
             $familyMembersCount = count($familyMembersDetails);
             if ($familyMembersCount === 0) {
                 $familyMembersCount = $request->input('family_members', $tenant->family_members ?? 0);
+            }
+
+            $tenantPhoto = $request->file('photo');
+            if ($tenantPhoto) {
+                if ($tenant->photo) {
+                    Storage::disk('public')->delete($tenant->photo);
+                }
+                $tenant->photo = $tenantPhoto->store('tenant-photos', 'public');
             }
 
             $tenant->update(array_merge($request->only([
@@ -188,18 +208,22 @@ class TenantController extends Controller
         });
     }
 
-    protected function filterFamilyMembers(array $familyMembers): array
+    protected function filterFamilyMembers(array $familyMembers, array $familyMemberFiles = []): array
     {
-        return array_values(array_filter($familyMembers, function ($member) {
+        return array_filter($familyMembers, function ($member, $index) use ($familyMemberFiles) {
             if (! is_array($member)) {
                 return false;
             }
 
             $name = trim((string) ($member['member_name'] ?? ''));
             $photos = $member['member_photos'] ?? [];
+            $files = $familyMemberFiles[$index] ?? [];
 
-            return $name !== '' || (! empty($photos) && is_array($photos));
-        }));
+            return $name !== ''
+                || (! empty($photos) && is_array($photos))
+                || ! empty($files['member_photo'])
+                || ! empty($files['member_photos']);
+        }, ARRAY_FILTER_USE_BOTH);
     }
 
     protected function storeNidPhotos(Request $request, ?Tenant $tenant = null): ?array
@@ -241,9 +265,17 @@ class TenantController extends Controller
         return $stored;
     }
 
+    protected function uploadFamilyMemberPhoto($photo, int $tenantId): ?string
+    {
+        return $photo?->store("family-members/{$tenantId}/portraits", 'public');
+    }
+
     protected function storeFamilyMembers(Request $request, Tenant $tenant): void
     {
-        $familyMembers = $this->filterFamilyMembers($request->input('family_members_details', []));
+        $familyMembers = $this->filterFamilyMembers(
+            $request->input('family_members_details', []),
+            $request->file('family_members_details', [])
+        );
         $familyMemberFiles = $request->file('family_members_details', []);
 
         foreach ($familyMembers as $index => $member) {
@@ -251,14 +283,16 @@ class TenantController extends Controller
             if (isset($familyMemberFiles[$index]['member_photos']) && is_array($familyMemberFiles[$index]['member_photos'])) {
                 $photos = $this->uploadFamilyMemberPhotos($familyMemberFiles[$index]['member_photos'], $tenant->id);
             }
+            $memberPhoto = $this->uploadFamilyMemberPhoto($familyMemberFiles[$index]['member_photo'] ?? null, $tenant->id);
 
-            if (blank($member['member_name'] ?? '') && empty($photos)) {
+            if (blank($member['member_name'] ?? '') && empty($photos) && ! $memberPhoto) {
                 continue;
             }
 
             FamilyMemberDetail::create([
                 'tenant_id' => $tenant->id,
                 'member_name' => $member['member_name'] ?? '',
+                'member_photo' => $memberPhoto,
                 'member_photos' => $photos,
             ]);
         }
@@ -271,11 +305,18 @@ class TenantController extends Controller
                 Storage::disk('public')->delete($path);
             }
         }
+
+        if ($familyMember->member_photo) {
+            Storage::disk('public')->delete($familyMember->member_photo);
+        }
     }
 
     protected function syncFamilyMembers(Request $request, Tenant $tenant): void
     {
-        $familyMembers = $this->filterFamilyMembers($request->input('family_members_details', []));
+        $familyMembers = $this->filterFamilyMembers(
+            $request->input('family_members_details', []),
+            $request->file('family_members_details', [])
+        );
         $familyMemberFiles = $request->file('family_members_details', []);
 
         $existingMemberIds = $tenant->familyMembers()->pluck('id')->all();
@@ -295,6 +336,7 @@ class TenantController extends Controller
             if (isset($familyMemberFiles[$index]['member_photos']) && is_array($familyMemberFiles[$index]['member_photos'])) {
                 $memberPhotos = $this->uploadFamilyMemberPhotos($familyMemberFiles[$index]['member_photos'], $tenant->id);
             }
+            $memberPhoto = $this->uploadFamilyMemberPhoto($familyMemberFiles[$index]['member_photo'] ?? null, $tenant->id);
 
             if (! empty($member['id'])) {
                 $familyMember = FamilyMemberDetail::find($member['id']);
@@ -307,17 +349,24 @@ class TenantController extends Controller
                     $this->deleteFamilyMemberPhotos($familyMember);
                     $familyMember->member_photos = $memberPhotos;
                 }
+                if ($memberPhoto) {
+                    if ($familyMember->member_photo) {
+                        Storage::disk('public')->delete($familyMember->member_photo);
+                    }
+                    $familyMember->member_photo = $memberPhoto;
+                }
                 $familyMember->save();
                 continue;
             }
 
-            if (blank($member['member_name'] ?? '') && empty($memberPhotos)) {
+            if (blank($member['member_name'] ?? '') && empty($memberPhotos) && ! $memberPhoto) {
                 continue;
             }
 
             FamilyMemberDetail::create([
                 'tenant_id' => $tenant->id,
                 'member_name' => $member['member_name'] ?? '',
+                'member_photo' => $memberPhoto,
                 'member_photos' => $memberPhotos,
             ]);
         }

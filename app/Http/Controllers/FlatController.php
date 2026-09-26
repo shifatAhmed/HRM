@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Building;
 use App\Models\Flat;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class FlatController extends Controller
@@ -26,7 +27,7 @@ class FlatController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'building_id' => ['required', 'exists:buildings,id'],
+            'building_id' => ['required', Rule::exists('buildings', 'id')->where('account_id', $request->user()->account_id)],
             'flat_no' => ['required', 'string', 'max:100'],
             'type' => ['required', 'integer', 'in:1,2'],
             'floor' => ['nullable', 'string', 'max:100'],
@@ -40,7 +41,11 @@ class FlatController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        Flat::create($request->all());
+        Flat::create($request->only([
+            'building_id', 'flat_no', 'type', 'floor', 'size', 'rent',
+            'gas_bill', 'water_bill', 'service_charge', 'electric_meter',
+            'status', 'notes',
+        ]));
 
         return redirect()->route('flats.index');
     }
@@ -56,7 +61,7 @@ class FlatController extends Controller
     public function update(Request $request, Flat $flat)
     {
         $request->validate([
-            'building_id' => ['required', 'exists:buildings,id'],
+            'building_id' => ['required', Rule::exists('buildings', 'id')->where('account_id', $request->user()->account_id)],
             'flat_no' => ['required', 'string', 'max:100'],
             'type' => ['required', 'integer', 'in:1,2'],
             'floor' => ['nullable', 'string', 'max:100'],
@@ -70,7 +75,11 @@ class FlatController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $flat->update($request->all());
+        $flat->update($request->only([
+            'building_id', 'flat_no', 'type', 'floor', 'size', 'rent',
+            'gas_bill', 'water_bill', 'service_charge', 'electric_meter',
+            'status', 'notes',
+        ]));
 
         return redirect()->route('flats.index');
     }

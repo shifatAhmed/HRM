@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 const createFamilyMember = () => ({
     id: null,
     member_name: '',
+    member_photo: null,
     member_photos: [],
 });
 
@@ -61,6 +62,7 @@ export default function Create({ flats }) {
         phone: '',
         nid: '',
         date_of_birth: '',
+        photo: null,
         nid_photo: [],
         profession: '',
         family_members: 1,
@@ -72,6 +74,7 @@ export default function Create({ flats }) {
         note: '',
     });
     const [previewUrls, setPreviewUrls] = useState([]);
+    const [tenantPhotoPreviewUrl, setTenantPhotoPreviewUrl] = useState('');
     const [scanningNid, setScanningNid] = useState(false);
     const [nidScanError, setNidScanError] = useState('');
 
@@ -88,6 +91,12 @@ export default function Create({ flats }) {
             previewUrls.forEach((url) => URL.revokeObjectURL(url));
         };
     }, [previewUrls]);
+
+    useEffect(() => () => {
+        if (tenantPhotoPreviewUrl) {
+            URL.revokeObjectURL(tenantPhotoPreviewUrl);
+        }
+    }, [tenantPhotoPreviewUrl]);
 
     const updateFamilyMembers = (nextMembers) => {
         setData('family_members_details', nextMembers);
@@ -166,6 +175,10 @@ export default function Create({ flats }) {
         formData.append('emergency_contact', data.emergency_contact || '');
         formData.append('note', data.note || '');
 
+        if (data.photo instanceof File) {
+            formData.append('photo', data.photo);
+        }
+
         if (Array.isArray(data.nid_photo)) {
             data.nid_photo.forEach((file) => {
                 if (file instanceof File) {
@@ -180,6 +193,10 @@ export default function Create({ flats }) {
             }
 
             formData.append(`family_members_details[${index}][member_name]`, member.member_name || '');
+
+            if (member.member_photo instanceof File) {
+                formData.append(`family_members_details[${index}][member_photo]`, member.member_photo);
+            }
 
             (member.member_photos || []).forEach((file) => {
                 if (file instanceof File) {
@@ -245,6 +262,7 @@ export default function Create({ flats }) {
                                     <InputError message={errors.flat_id} className="mt-2" />
                                 </div>
 
+                                <div className="grid gap-6 md:grid-cols-2">
                                 <div>
                                     <InputLabel htmlFor="nid_photo" value="NID Photos (Front & Back)" />
                                     <input
@@ -274,7 +292,7 @@ export default function Create({ flats }) {
                                             disabled={scanningNid || !(data.nid_photo?.[0] instanceof File)}
                                             className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
-                                            {scanningNid ? 'Reading NID...' : 'Read NID with AI'}
+                                            {scanningNid ? 'Reading NID...' : 'Read NID with OCR'}
                                         </button>
                                     </div>
                                     {nidScanError && (
@@ -293,6 +311,26 @@ export default function Create({ flats }) {
                                         </div>
                                     )}
                                     <InputError message={getErrorMessage(errors.nid_photo)} className="mt-2" />
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="photo" value="Person Photo" />
+                                    <input
+                                        id="photo"
+                                        name="photo"
+                                        type="file"
+                                        accept="image/*"
+                                        className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0] || null;
+                                            setData('photo', file);
+                                            setTenantPhotoPreviewUrl(file ? URL.createObjectURL(file) : '');
+                                        }}
+                                    />
+                                    {tenantPhotoPreviewUrl && (
+                                        <img src={tenantPhotoPreviewUrl} alt="Tenant portrait preview" className="mt-3 h-24 w-24 rounded-md border border-gray-200 object-cover" />
+                                    )}
+                                    <InputError message={errors.photo} className="mt-2" />
+                                </div>
                                 </div>
 
                                 <div>
@@ -376,6 +414,7 @@ export default function Create({ flats }) {
                                                 <tr>
                                                     <th className="px-2 pb-2 text-left text-sm font-medium text-gray-600">Member Name</th>
                                                     <th className="px-2 pb-2 text-left text-sm font-medium text-gray-600">NID Photos</th>
+                                                    <th className="px-2 pb-2 text-left text-sm font-medium text-gray-600">Person Photo</th>
                                                     <th className="px-2 pb-2 text-left text-sm font-medium text-gray-600">Action</th>
                                                 </tr>
                                             </thead>
@@ -404,6 +443,17 @@ export default function Create({ flats }) {
                                                                         <div key={`${file.name}-${fileIndex}`}>{file.name}</div>
                                                                     ))}
                                                                 </div>
+                                                            )}
+                                                        </td>
+                                                        <td className="border border-gray-200 bg-white px-2 py-2">
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                                onChange={(e) => updateFamilyMember(index, 'member_photo', e.target.files?.[0] || null)}
+                                                            />
+                                                            {member.member_photo && (
+                                                                <p className="mt-2 text-xs text-gray-600">{member.member_photo.name}</p>
                                                             )}
                                                         </td>
                                                         <td className="rounded-r-md border border-gray-200 bg-white px-2 py-2">

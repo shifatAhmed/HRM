@@ -6,13 +6,14 @@ use App\Models\Payment;
 use App\Models\RentInvoice;
 use App\Services\NotifyBdSmsService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PaymentController extends Controller
 {
     public function store(Request $request, NotifyBdSmsService $smsService)
     {
         $request->validate([
-            'invoice_id' => ['required','exists:rent_invoices,id'],
+            'invoice_id' => ['required', Rule::exists('rent_invoices', 'id')->where('account_id', $request->user()->account_id)],
             'amount' => ['required','numeric','min:0.01'],
             'payment_method' => ['required','string'],
             'payment_date' => ['required','date'],

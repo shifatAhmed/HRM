@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
@@ -23,7 +24,29 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'account_id',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $user): void {
+            if ($user->account_id) {
+                return;
+            }
+
+            $account = Account::create([
+                'name' => $user->name . ' Account',
+                'slug' => str()->slug($user->name) . '-' . str()->random(8),
+            ]);
+
+            $user->account_id = $account->id;
+        });
+    }
+
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
+    }
 
     /**
      * The attributes that should be hidden for serialization.

@@ -88,6 +88,11 @@ export default function Show({ tenant }) {
     };
 
     const nidPhotos = normalizePhotos(tenant.nid_photo);
+    const tenantPhoto = normalizePhotos(tenant.photo)[0] || null;
+    const photoUrl = (photo) =>
+        photo?.startsWith('/storage/') || photo?.startsWith('http')
+            ? photo
+            : `/storage/${photo}`;
 
     return (
         <AuthenticatedLayout
@@ -478,16 +483,28 @@ export default function Show({ tenant }) {
                         </div>
 
                         {/* NID Photos */}
-                        {nidPhotos.length > 0 && (
+                        {(tenantPhoto || nidPhotos.length > 0) && (
                             <div className="nid-photos">
-                                <h3>NID Photos</h3>
+                                <h3>Tenant Photo and NID Photos</h3>
                                 <div className="photo-grid">
+                                    {tenantPhoto && (
+                                        <div className="photo-item">
+                                            <img
+                                                src={photoUrl(tenantPhoto)}
+                                                alt={`${tenant.name} portrait`}
+                                                onClick={() => setSelectedPhoto(photoUrl(tenantPhoto))}
+                                            />
+                                            <p>Person Photo</p>
+                                        </div>
+                                    )}
                                     {nidPhotos.map((photo, index) => (
                                         <div key={index} className="photo-item">
                                             <img
-                                                src={`/storage/${photo}`}
+                                                src={photoUrl(photo)}
                                                 alt={`Tenant NID ${index + 1}`}
+                                                onClick={() => setSelectedPhoto(photoUrl(photo))}
                                             />
+                                            <p>NID Photo {index + 1}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -503,31 +520,47 @@ export default function Show({ tenant }) {
                                 <table className="family-table">
                                     <thead>
                                         <tr>
-                                            <th style={{ width: '35%' }}>Name</th>
-                                            <th style={{ width: '35%' }}>Relation</th>
-                                            <th style={{ width: '30%', textAlign: 'center' }}>Photo</th>
+                                            <th style={{ width: '25%' }}>Name</th>
+                                            <th style={{ width: '20%' }}>Relation</th>
+                                            <th style={{ width: '20%', textAlign: 'center' }}>Person Photo</th>
+                                            <th style={{ width: '35%', textAlign: 'center' }}>NID Photos</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {familyMembers.map((member, index) => {
                                             const memberPhotos = normalizePhotos(member.member_photos);
-                                            const firstPhoto = memberPhotos.length > 0 ? memberPhotos[0] : null;
+                                            const memberPortrait = normalizePhotos(member.member_photo)[0] || null;
 
                                             return (
                                                 <tr key={member.id || index}>
                                                     <td>{member.member_name || 'N/A'}</td>
                                                     <td>{member.relation || 'N/A'}</td>
                                                     <td style={{ textAlign: 'center' }}>
-                                                        {firstPhoto ? (
+                                                        {memberPortrait ? (
                                                             <img
-                                                                src={`/storage/${firstPhoto}`}
-                                                                alt={member.member_name || 'Family member'}
+                                                                src={photoUrl(memberPortrait)}
+                                                                alt={`${member.member_name || 'Family member'} portrait`}
                                                                 className="passport-photo"
-                                                                onClick={() => setSelectedPhoto(`/storage/${firstPhoto}`)}
+                                                                onClick={() => setSelectedPhoto(photoUrl(memberPortrait))}
                                                             />
                                                         ) : (
                                                             <span style={{ fontSize: '9px', color: '#999' }}>No photo</span>
                                                         )}
+                                                    </td>
+                                                    <td style={{ textAlign: 'center' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                                                            {memberPhotos.length > 0 ? memberPhotos.map((photo, photoIndex) => (
+                                                                <img
+                                                                    key={`${member.id || index}-nid-${photoIndex}`}
+                                                                    src={photoUrl(photo)}
+                                                                    alt={`${member.member_name || 'Family member'} NID ${photoIndex + 1}`}
+                                                                    className="passport-photo"
+                                                                    onClick={() => setSelectedPhoto(photoUrl(photo))}
+                                                                />
+                                                            )) : (
+                                                                <span style={{ fontSize: '9px', color: '#999' }}>No NID photos</span>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             );

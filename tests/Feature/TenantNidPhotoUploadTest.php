@@ -48,6 +48,8 @@ class TenantNidPhotoUploadTest extends TestCase
 
         $front = UploadedFile::fake()->image('front.jpg', 400, 300);
         $back = UploadedFile::fake()->image('back.jpg', 400, 300);
+        $tenantPhoto = UploadedFile::fake()->image('tenant.jpg', 300, 300);
+        $memberPhoto = UploadedFile::fake()->image('member.jpg', 300, 300);
 
         $response = $this->actingAs($user)->patch(route('tenants.update', $tenant->id), [
             'flat_id' => $flat->id,
@@ -55,6 +57,11 @@ class TenantNidPhotoUploadTest extends TestCase
             'phone' => '01711111111',
             'nid' => '9999999999',
             'nid_photo' => [$front, $back],
+            'photo' => $tenantPhoto,
+            'family_members_details' => [[
+                'member_name' => 'Updated Family Member',
+                'member_photo' => $memberPhoto,
+            ]],
             'profession' => 'Teacher',
             'family_members' => 2,
             'advance_amount' => 30000,
@@ -72,6 +79,11 @@ class TenantNidPhotoUploadTest extends TestCase
         $this->assertSame('Updated Tenant', $tenant->name);
         $this->assertSame('9999999999', $tenant->nid);
         $this->assertCount(2, $tenant->nid_photo ?? []);
+        $this->assertNotEmpty($tenant->photo);
+        Storage::disk('public')->assertExists($tenant->photo);
+        $this->assertSame('Updated Family Member', $tenant->familyMembers->first()->member_name);
+        $this->assertNotEmpty($tenant->familyMembers->first()->member_photo);
+        Storage::disk('public')->assertExists($tenant->familyMembers->first()->member_photo);
     }
 
     public function test_tenant_create_page_loads_successfully(): void
@@ -237,6 +249,8 @@ class TenantNidPhotoUploadTest extends TestCase
 
         $front = UploadedFile::fake()->image('family-front.jpg', 300, 300);
         $back = UploadedFile::fake()->image('family-back.jpg', 300, 300);
+        $tenantPhoto = UploadedFile::fake()->image('family-tenant.jpg', 300, 300);
+        $memberPhoto = UploadedFile::fake()->image('family-member.jpg', 300, 300);
 
         $response = $this->actingAs($user)->post(route('tenants.store'), [
             'flat_id' => $flat->id,
@@ -252,8 +266,10 @@ class TenantNidPhotoUploadTest extends TestCase
             'note' => 'Has family members',
             'family_members_details' => [[
                 'member_name' => 'Jane Doe',
+                'member_photo' => $memberPhoto,
                 'member_photos' => [$front, $back],
             ]],
+            'photo' => $tenantPhoto,
         ]);
 
         $response->assertRedirect(route('tenants.index'));
@@ -262,6 +278,10 @@ class TenantNidPhotoUploadTest extends TestCase
 
         $this->assertCount(1, $tenant->familyMembers);
         $this->assertSame('Jane Doe', $tenant->familyMembers->first()->member_name);
+        $this->assertNotEmpty($tenant->photo);
+        Storage::disk('public')->assertExists($tenant->photo);
+        $this->assertNotEmpty($tenant->familyMembers->first()->member_photo);
+        Storage::disk('public')->assertExists($tenant->familyMembers->first()->member_photo);
         $this->assertCount(2, $tenant->familyMembers->first()->member_photos);
         Storage::disk('public')->assertExists($tenant->familyMembers->first()->member_photos[0]);
         Storage::disk('public')->assertExists($tenant->familyMembers->first()->member_photos[1]);
