@@ -1,7 +1,13 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
+
+const rowsPerPage = 10;
 
 export default function Index({ invoices }) {
+    const [search, setSearch] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+
     const formatMonthLabel = (month, year) => {
         const monthName = new Date(Number(year), Number(month) - 1, 1).toLocaleString(
             'en-US',
@@ -11,16 +17,53 @@ export default function Index({ invoices }) {
         return `${monthName} ${year}`;
     };
 
+    const filteredInvoices = useMemo(() => {
+        const query = search.trim().toLowerCase();
+
+        if (!query) {
+            return invoices;
+        }
+
+        return invoices.filter((inv) =>
+            [
+                inv.id,
+                inv.tenant?.name,
+                inv.tenant?.flat?.flat_no,
+                inv.status,
+                inv.total_amount,
+                inv.due_amount,
+                formatMonthLabel(inv.month, inv.year),
+            ]
+                .filter(Boolean)
+                .join(' ')
+                .toLowerCase()
+                .includes(query),
+        );
+    }, [invoices, search]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredInvoices.length / rowsPerPage));
+
+    useEffect(() => {
+        setCurrentPage((page) => Math.min(page, totalPages));
+    }, [totalPages]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search]);
+
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const paginatedInvoices = filteredInvoices.slice(startIndex, startIndex + rowsPerPage);
+
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
                         Rent Invoices
                     </h2>
                     <Link
                         href={route('invoices.create')}
-                        className="rounded-md bg-gray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700"
+                        className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-500"
                     >
                         Generate Invoice
                     </Link>
@@ -31,57 +74,123 @@ export default function Index({ invoices }) {
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                        <div className="p-6 overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
+                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div className="flex flex-col gap-4 border-b border-slate-200 p-5 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900">Invoice ledger</h3>
+                                <p className="text-sm text-slate-500">Review totals, balances, and outstanding invoices.</p>
+                            </div>
+                            <div className="w-full md:max-w-sm">
+                                <label htmlFor="invoice-search" className="mb-1 block text-sm font-medium text-slate-700">
+                                    Search
+                                </label>
+                                <input
+                                    id="invoice-search"
+                                    type="search"
+                                    value={search}
+                                    onChange={(event) => setSearch(event.target.value)}
+                                    placeholder="Search invoice, tenant, status"
+                                    className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto p-5 pt-0">
+                            <table className="min-w-full divide-y divide-slate-200">
+                                <thead className="bg-slate-100">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Invoice</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Flats</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Tenant</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Total</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Due</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
+                                        <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-600">SL</th>
+                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Invoice</th>
+                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Flat</th>
+                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Tenant</th>
+                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Total</th>
+                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Due</th>
+                                        <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                                        <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-600">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-200 bg-white">
-                                    {invoices.length > 0 ? (
-                                        invoices.map((inv) => (
-                                            <tr key={inv.id}>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <tbody className="divide-y divide-slate-200 bg-white">
+                                    {paginatedInvoices.length > 0 ? (
+                                        paginatedInvoices.map((inv, index) => (
+                                            <tr key={inv.id} className="transition hover:bg-slate-50">
+                                                <td className="px-5 py-4 text-center text-sm font-medium text-slate-600">
+                                                    {startIndex + index + 1}
+                                                </td>
+                                                <td className="px-5 py-4 text-sm font-medium text-slate-900">
                                                     #{inv.id} — {formatMonthLabel(inv.month, inv.year)}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{inv.tenant?.flat?.flat_no}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{inv.tenant?.name} </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">৳{inv.total_amount}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">৳{inv.due_amount}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{inv.status}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <a
-                                                        href={route('invoices.receipt', inv.id)}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-indigo-600 hover:text-indigo-900"
+                                                <td className="px-5 py-4 text-sm text-slate-600">{inv.tenant?.flat?.flat_no}</td>
+                                                <td className="px-5 py-4 text-sm text-slate-600">{inv.tenant?.name}</td>
+                                                <td className="px-5 py-4 text-sm font-semibold text-slate-900">৳{inv.total_amount}</td>
+                                                <td className="px-5 py-4 text-sm font-semibold text-slate-900">৳{inv.due_amount}</td>
+                                                <td className="px-5 py-4 text-sm">
+                                                    <span
+                                                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
+                                                            inv.status === 'paid'
+                                                                ? 'bg-emerald-100 text-emerald-700'
+                                                                : inv.status === 'partial'
+                                                                    ? 'bg-amber-100 text-amber-700'
+                                                                    : 'bg-rose-100 text-rose-700'
+                                                        }`}
                                                     >
-                                                        View
-                                                    </a>
-                                                    <Link
-                                                        href={route('invoices.show', inv.id)}
-                                                        className="ml-4 text-green-600 hover:text-green-900"
-                                                    >
-                                                        Pay
-                                                    </Link>
+                                                        {inv.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-5 py-4 text-right text-sm font-medium">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <a
+                                                            href={route('invoices.receipt', inv.id)}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
+                                                        >
+                                                            View
+                                                        </a>
+                                                        <Link
+                                                            href={route('invoices.show', inv.id)}
+                                                            className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                                                        >
+                                                            Pay
+                                                        </Link>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">No invoices found.</td>
+                                            <td colSpan="8" className="px-6 py-10 text-center text-sm text-slate-500">No invoices found.</td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+
+                        <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="text-sm text-slate-500">
+                                Showing {filteredInvoices.length === 0 ? 0 : startIndex + 1}–
+                                {Math.min(startIndex + rowsPerPage, filteredInvoices.length)} of {filteredInvoices.length}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                                    disabled={currentPage === 1}
+                                    className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Prev
+                                </button>
+                                <span className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">
+                                    {currentPage}/{totalPages}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Next
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
