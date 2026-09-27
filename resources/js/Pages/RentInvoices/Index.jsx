@@ -142,13 +142,13 @@ export default function Index({ invoices }) {
                                                             href={route('invoices.receipt', inv.id)}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="inline-flex items-center rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
+                                                            className="list-action list-action-view"
                                                         >
                                                             View
                                                         </a>
                                                         <Link
                                                             href={route('invoices.show', inv.id)}
-                                                            className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                                                            className="list-action list-action-pay"
                                                         >
                                                             Pay
                                                         </Link>

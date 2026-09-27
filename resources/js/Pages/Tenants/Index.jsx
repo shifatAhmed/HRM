@@ -135,13 +135,13 @@ export default function Index({ tenants }) {
                                                     <div className="flex items-center justify-end gap-2">
                                                         <Link
                                                             href={route('tenants.show', tenant.id)}
-                                                            className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                                                            className="list-action list-action-view"
                                                         >
                                                             View
                                                         </Link>
                                                         <Link
                                                             href={route('tenants.edit', tenant.id)}
-                                                            className="inline-flex items-center rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
+                                                            className="list-action list-action-edit"
                                                         >
                                                             Edit
                                                         </Link>

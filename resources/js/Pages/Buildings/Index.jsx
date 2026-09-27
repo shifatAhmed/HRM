@@ -114,7 +114,7 @@ export default function Index({ buildings }) {
                                                 <td className="px-5 py-4 text-right text-sm font-medium">
                                                     <Link
                                                         href={route('buildings.edit', building.id)}
-                                                        className="inline-flex items-center rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
+                                                        className="list-action list-action-edit"
                                                     >
                                                         Edit
                                                     </Link>
