@@ -48,11 +48,15 @@ class PaymentController extends Controller
             $flatName = $invoice->tenant->flat?->flat_no ?? 'your flat';
             $paymentAmount = number_format((float) $payment->amount, 2, '.', '');
             $dueAmount = number_format((float) $invoice->due_amount, 2, '.', '');
-            $message = "Dear {$invoice->tenant->name}, payment of ৳{$paymentAmount} received for {$flatName} invoice #{$invoice->id}. Remaining due: ৳{$dueAmount}. Thank you.";
+            $message = "সম্মানিত গ্রাহক, আপনার {$month} মাসের {$flatName}-এর ভাড়া ৳{$paymentAmount} পরিশোধ করা হয়েছে।
+                        Invoice No: #{$invoice->id}
+                        অবশিষ্ট বকেয়া: ৳{$dueAmount}
+
+                        ধন্যবাদ।";
 
             $smsService->send($invoice->tenant->phone, $message);
         }
 
-        return redirect()->back()->with('success', 'Payment recorded successfully.');
+        return redirect()->back()->with('success', 'Payment recorded successfully and A SMS sent.');
     }
 }
