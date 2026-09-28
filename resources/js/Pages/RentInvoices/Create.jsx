@@ -1,11 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 
 export default function Create() {
-    const { flash = {} } = usePage().props;
     const { data, setData, post, processing } = useForm({
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear(),
@@ -41,18 +40,6 @@ export default function Create() {
                 <div className="mx-auto max-w-3xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 space-y-6">
-                            {flash.success && (
-                                <div className="rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-                                    {flash.success}
-                                </div>
-                            )}
-
-                            {flash.warning && (
-                                <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-700">
-                                    {flash.warning}
-                                </div>
-                            )}
-
                             <form onSubmit={submit} className="space-y-6">
                                 <p className="text-sm text-gray-600">
                                     Invoices will be generated for every occupied flat that currently has an active tenant.

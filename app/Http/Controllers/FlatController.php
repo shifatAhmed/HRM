@@ -47,7 +47,7 @@ class FlatController extends Controller
             'status', 'notes',
         ]));
 
-        return redirect()->route('flats.index');
+        return redirect()->route('flats.index')->with('success', 'Flat added successfully.');
     }
 
     public function edit(Flat $flat)
@@ -81,7 +81,7 @@ class FlatController extends Controller
             'status', 'notes',
         ]));
 
-        return redirect()->route('flats.index');
+        return redirect()->route('flats.index')->with('success', 'Flat updated successfully.');
     }
 
     public function destroy(Flat $flat)

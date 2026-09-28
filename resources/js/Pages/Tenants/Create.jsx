@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import FlatSearchSelect from '@/Components/FlatSearchSelect';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -30,32 +30,7 @@ const getErrorMessage = (messages) => {
     return '';
 };
 
-const collectErrorMessages = (errorBag = {}) => {
-    const messages = [];
-
-    const walk = (value) => {
-        if (Array.isArray(value)) {
-            value.forEach((item) => walk(item));
-            return;
-        }
-
-        if (typeof value === 'object' && value !== null) {
-            Object.values(value).forEach((item) => walk(item));
-            return;
-        }
-
-        if (typeof value === 'string' && value.trim() !== '') {
-            messages.push(value);
-        }
-    };
-
-    walk(errorBag);
-
-    return messages;
-};
-
 export default function Create({ flats }) {
-    const { flash = {} } = usePage().props;
     const { data, setData, post, processing, errors } = useForm({
         flat_id: flats[0]?.id || '',
         name: '',
@@ -219,8 +194,6 @@ export default function Create({ flats }) {
         });
     };
 
-    const errorSummary = collectErrorMessages(errors);
-
     return (
         <AuthenticatedLayout
             header={
@@ -235,22 +208,6 @@ export default function Create({ flats }) {
                 <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            {flash.success && (
-                                <div className="mb-6 rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-                                    {flash.success}
-                                </div>
-                            )}
-
-                            {errorSummary.length > 0 && (
-                                <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                                    <ul className="list-disc space-y-1 pl-5">
-                                        {errorSummary.map((message, index) => (
-                                            <li key={`${message}-${index}`}>{message}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-
                             <form onSubmit={submit} className="space-y-6">
                                 <div>
                                     <InputLabel htmlFor="flat_id" value="Assign Flat/Room" />

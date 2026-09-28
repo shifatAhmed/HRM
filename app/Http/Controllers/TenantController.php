@@ -204,7 +204,7 @@ class TenantController extends Controller
                 $tenant->flat->update(['status' => 'vacant']);
             }
 
-            return redirect()->route('tenants.index');
+            return redirect()->route('tenants.index')->with('success', 'Tenant updated successfully.');
         });
     }
 

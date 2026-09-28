@@ -2,11 +2,25 @@ import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import { Link, usePage } from '@inertiajs/react';
-import { Home } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Home, Info } from 'lucide-react';
 import { useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const { auth, errors = {}, flash = {} } = usePage().props;
+    const user = auth.user;
+    const firstError = Object.values(errors)
+        .flat(Infinity)
+        .find((message) => typeof message === 'string' && message.trim());
+    const feedbackMessages = [
+        { type: 'success', message: flash.success },
+        { type: 'warning', message: flash.warning },
+        {
+            type: 'error',
+            message: flash.error || (firstError
+                ? `Please correct the highlighted fields. ${firstError}`
+                : null),
+        },
+    ].filter(({ message }) => message);
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -222,6 +236,30 @@ export default function AuthenticatedLayout({ header, children }) {
                         {header}
                     </div>
                 </header>
+            )}
+
+            {feedbackMessages.length > 0 && (
+                <div className="mx-auto mt-4 w-full max-w-7xl space-y-2 px-4 sm:px-6 lg:px-8" aria-live="polite">
+                    {feedbackMessages.map(({ type, message }) => {
+                        const styles = {
+                            success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+                            warning: 'border-amber-200 bg-amber-50 text-amber-800',
+                            error: 'border-rose-200 bg-rose-50 text-rose-800',
+                        }[type];
+                        const Icon = {
+                            success: CheckCircle2,
+                            warning: Info,
+                            error: AlertCircle,
+                        }[type];
+
+                        return (
+                            <div key={type} role={type === 'error' ? 'alert' : 'status'} className={`flex items-start gap-3 rounded-lg border px-4 py-3 text-sm ${styles}`}>
+                                <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                                <p>{message}</p>
+                            </div>
+                        );
+                    })}
+                </div>
             )}
 
             <main>{children}</main>

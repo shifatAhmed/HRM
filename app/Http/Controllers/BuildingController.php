@@ -30,7 +30,7 @@ class BuildingController extends Controller
 
         Building::create($request->only(['name', 'address', 'description']));
 
-        return redirect()->route('buildings.index');
+        return redirect()->route('buildings.index')->with('success', 'Building added successfully.');
     }
 
     public function edit(Building $building)
@@ -50,7 +50,7 @@ class BuildingController extends Controller
 
         $building->update($request->only(['name', 'address', 'description']));
 
-        return redirect()->route('buildings.index');
+        return redirect()->route('buildings.index')->with('success', 'Building updated successfully.');
     }
 
     public function destroy(Building $building)
