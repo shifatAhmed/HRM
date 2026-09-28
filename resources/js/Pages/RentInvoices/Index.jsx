@@ -6,6 +6,8 @@ const rowsPerPage = 10;
 
 export default function Index({ invoices }) {
     const [search, setSearch] = useState('');
+    const [selectedFlat, setSelectedFlat] = useState('');
+    const [selectedTenant, setSelectedTenant] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
 
     const formatMonthLabel = (month, year) => {
@@ -17,15 +19,48 @@ export default function Index({ invoices }) {
         return `${monthName} ${year}`;
     };
 
+    const flatOptions = useMemo(() => {
+        const flats = new Map();
+
+        invoices.forEach((invoice) => {
+            const flat = invoice.tenant?.flat;
+            const flatId = invoice.flat_id ?? flat?.id;
+
+            if (flatId && flat) {
+                flats.set(String(flatId), flat.flat_no);
+            }
+        });
+
+        return Array.from(flats, ([id, label]) => ({ id, label })).sort((a, b) =>
+            String(a.label).localeCompare(String(b.label)),
+        );
+    }, [invoices]);
+
+    const tenantOptions = useMemo(() => {
+        const tenants = new Map();
+
+        invoices.forEach((invoice) => {
+            const tenant = invoice.tenant;
+
+            if (tenant?.id) {
+                tenants.set(String(tenant.id), tenant.name);
+            }
+        });
+
+        return Array.from(tenants, ([id, label]) => ({ id, label })).sort((a, b) =>
+            String(a.label).localeCompare(String(b.label)),
+        );
+    }, [invoices]);
+
     const filteredInvoices = useMemo(() => {
         const query = search.trim().toLowerCase();
 
-        if (!query) {
-            return invoices;
-        }
-
-        return invoices.filter((inv) =>
-            [
+        return invoices.filter((inv) => {
+            const matchesFlat = !selectedFlat
+                || String(inv.flat_id ?? inv.tenant?.flat?.id ?? '') === selectedFlat;
+            const matchesTenant = !selectedTenant
+                || String(inv.tenant_id ?? inv.tenant?.id ?? '') === selectedTenant;
+            const matchesSearch = !query || [
                 inv.id,
                 inv.tenant?.name,
                 inv.tenant?.flat?.flat_no,
@@ -37,9 +72,11 @@ export default function Index({ invoices }) {
                 .filter(Boolean)
                 .join(' ')
                 .toLowerCase()
-                .includes(query),
-        );
-    }, [invoices, search]);
+                .includes(query);
+
+            return matchesFlat && matchesTenant && matchesSearch;
+        });
+    }, [invoices, search, selectedFlat, selectedTenant]);
 
     const totalPages = Math.max(1, Math.ceil(filteredInvoices.length / rowsPerPage));
 
@@ -49,7 +86,7 @@ export default function Index({ invoices }) {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [search]);
+    }, [search, selectedFlat, selectedTenant]);
 
     const startIndex = (currentPage - 1) * rowsPerPage;
     const paginatedInvoices = filteredInvoices.slice(startIndex, startIndex + rowsPerPage);
@@ -75,23 +112,57 @@ export default function Index({ invoices }) {
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                        <div className="flex flex-col gap-4 border-b border-slate-200 p-5 md:flex-row md:items-center md:justify-between">
+                        <div className="flex flex-col gap-4 border-b border-slate-200 p-5 md:flex-row md:items-end md:justify-between">
                             <div>
                                 <h3 className="text-lg font-semibold text-slate-900">Invoice ledger</h3>
                                 <p className="text-sm text-slate-500">Review totals, balances, and outstanding invoices.</p>
                             </div>
-                            <div className="w-full md:max-w-sm">
-                                <label htmlFor="invoice-search" className="mb-1 block text-sm font-medium text-slate-700">
-                                    Search
-                                </label>
-                                <input
-                                    id="invoice-search"
-                                    type="search"
-                                    value={search}
-                                    onChange={(event) => setSearch(event.target.value)}
-                                    placeholder="Search invoice, tenant, status"
-                                    className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
+                            <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-auto lg:grid-cols-3">
+                                <div>
+                                    <label htmlFor="invoice-flat-filter" className="mb-1 block text-sm font-medium text-slate-700">
+                                        Flat
+                                    </label>
+                                    <select
+                                        id="invoice-flat-filter"
+                                        value={selectedFlat}
+                                        onChange={(event) => setSelectedFlat(event.target.value)}
+                                        className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="">All flats</option>
+                                        {flatOptions.map((flat) => (
+                                            <option key={flat.id} value={flat.id}>{flat.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="invoice-tenant-filter" className="mb-1 block text-sm font-medium text-slate-700">
+                                        Tenant
+                                    </label>
+                                    <select
+                                        id="invoice-tenant-filter"
+                                        value={selectedTenant}
+                                        onChange={(event) => setSelectedTenant(event.target.value)}
+                                        className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="">All tenants</option>
+                                        {tenantOptions.map((tenant) => (
+                                            <option key={tenant.id} value={tenant.id}>{tenant.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="invoice-search" className="mb-1 block text-sm font-medium text-slate-700">
+                                        Search
+                                    </label>
+                                    <input
+                                        id="invoice-search"
+                                        type="search"
+                                        value={search}
+                                        onChange={(event) => setSearch(event.target.value)}
+                                        placeholder="Search invoice, status"
+                                        className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
                             </div>
                         </div>
 

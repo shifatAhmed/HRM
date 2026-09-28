@@ -14,6 +14,8 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        $currentMonth = now();
+
         return Inertia::render('Dashboard', [
             'stats' => [
                 'buildings' => Building::count(),
@@ -22,8 +24,12 @@ class DashboardController extends Controller
                 'vacant_flats' => Flat::where('status', 'vacant')->count(),
                 'tenants' => Tenant::count(),
                 'pending_invoices' => RentInvoice::where('status', '!=', 'paid')->count(),
-                'due_total' => RentInvoice::sum('due_amount'),
-                'collected_total' => Payment::sum('amount'),
+                'due_total' => RentInvoice::where('month', $currentMonth->month)
+                    ->where('year', $currentMonth->year)
+                    ->sum('due_amount'),
+                'collected_total' => Payment::whereMonth('payment_date', $currentMonth->month)
+                    ->whereYear('payment_date', $currentMonth->year)
+                    ->sum('amount'),
             ],
         ]);
     }
