@@ -446,10 +446,10 @@ export default function Show({ tenant }) {
                             <div className="company-info">
                                 <div className="company-logo">👤</div>
                                 <div className="company-details">
-                                    <h1>GREEN VIEW RESIDENCE</h1>
+                                    <h1>Mondol Residence</h1>
                                     <p>House Rent Management System</p>
-                                    <p>📍 Road-12, Block-A, Bashundhara R/A, Dhaka-1229</p>
-                                    <p>📞 01712-345678, 01898-765432</p>
+                                    <p>📍 Akrain, Savar, Dhaka-1229</p>
+                                    <p>📞 01712-345678</p>
                                 </div>
                             </div>
                             <div style={{ textAlign: 'center' }}>

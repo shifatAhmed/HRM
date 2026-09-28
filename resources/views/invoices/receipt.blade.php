@@ -310,8 +310,8 @@
                 <div class="company-details">
                     <h1>{{ config('app.name', 'House Rent') }}</h1>
                     <p>{{ __('House Rent Management System') }}</p>
-                    <p>📍 Road-12, Block-A, Bashundhara R/A, Dhaka-1229</p>
-                    <p>📞 01712-345678, 01898-765432</p>
+                    <p>📍 Akrain, Savar, Dhaka-1229</p>
+                    <p>📞 01712-345678</p>
                 </div>
             </div>
             <div style="text-align: center;">
